@@ -3,22 +3,34 @@ import 'package:provider/provider.dart';
 
 import '../controllers/controllers.dart';
 
+// ─── Paleta vibrante ──────────────────────────────────────────────────────────
+class _C {
+  static const purple   = Color(0xFF7C3AED);
+  static const pink     = Color(0xFFEC4899);
+  static const cyan     = Color(0xFF06B6D4);
+  static const dark     = Color(0xFF0F0A1E);
+  static const darkCard = Color(0xFF1A1030);
+  static const surface  = Color(0xFF231845);
+  static const border   = Color(0xFF3D2D6B);
+  static const textMid  = Color(0xFFB8A9D9);
+  static const white    = Colors.white;
+}
+
 class AuthPage extends StatefulWidget {
   const AuthPage({super.key});
-
   @override
   State<AuthPage> createState() => _AuthPageState();
 }
 
 class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin {
   late final TabController _tabController;
-  final _loginEmail = TextEditingController(text: 'demo@soundstream.local');
+  final _loginEmail    = TextEditingController(text: 'demo@soundstream.local');
   final _loginPassword = TextEditingController(text: 'Demo12345');
-  final _registerName = TextEditingController();
-  final _registerEmail = TextEditingController();
-  final _registerPassword = TextEditingController();
-  final _registerArtistName = TextEditingController();
-  String _accountType = 'user';
+  final _regName       = TextEditingController();
+  final _regEmail      = TextEditingController();
+  final _regPassword   = TextEditingController();
+  final _regArtist     = TextEditingController();
+  String _accountType  = 'user';
 
   @override
   void initState() {
@@ -29,498 +41,507 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
   @override
   void dispose() {
     _tabController.dispose();
-    _loginEmail.dispose();
-    _loginPassword.dispose();
-    _registerName.dispose();
-    _registerEmail.dispose();
-    _registerPassword.dispose();
-    _registerArtistName.dispose();
+    _loginEmail.dispose(); _loginPassword.dispose();
+    _regName.dispose(); _regEmail.dispose();
+    _regPassword.dispose(); _regArtist.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthController>();
-    final colors = Theme.of(context).colorScheme;
-
     return Scaffold(
-      body: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              colors.primaryContainer,
-              const Color(0xFFF4F7F8),
-              const Color(0xFFEAF3F5),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1080),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final compact = constraints.maxWidth < 860;
-                  return compact
-                      ? _AuthCard(
-                          auth: auth,
-                          tabController: _tabController,
-                          loginEmail: _loginEmail,
-                          loginPassword: _loginPassword,
-                          registerName: _registerName,
-                          registerEmail: _registerEmail,
-                          registerPassword: _registerPassword,
-                          registerArtistName: _registerArtistName,
-                          accountType: _accountType,
-                          onAccountTypeChanged: (value) => setState(() => _accountType = value),
-                        )
-                      : Row(
-                          children: [
-                            const Expanded(child: _AuthHero()),
-                            const SizedBox(width: 24),
-                            Expanded(
-                              child: _AuthCard(
-                                auth: auth,
-                                tabController: _tabController,
-                                loginEmail: _loginEmail,
-                                loginPassword: _loginPassword,
-                                registerName: _registerName,
-                                registerEmail: _registerEmail,
-                                registerPassword: _registerPassword,
-                                registerArtistName: _registerArtistName,
-                                accountType: _accountType,
-                                onAccountTypeChanged: (value) => setState(() => _accountType = value),
-                              ),
-                            ),
-                          ],
-                        );
-                },
+      backgroundColor: _C.dark,
+      body: Stack(
+        children: [
+          // Fondo con orbes de color
+          Positioned(top: -120, left: -80,
+            child: _GlowOrb(color: _C.purple, size: 380)),
+          Positioned(bottom: -100, right: -60,
+            child: _GlowOrb(color: _C.pink, size: 320)),
+          Positioned(top: 200, right: 80,
+            child: _GlowOrb(color: _C.cyan, size: 180)),
+          // Contenido
+          SafeArea(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1100),
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: LayoutBuilder(
+                    builder: (ctx, constraints) {
+                      final wide = constraints.maxWidth >= 860;
+                      if (wide) {
+                        return Row(children: [
+                          const Expanded(child: _Hero()),
+                          const SizedBox(width: 32),
+                          Expanded(child: _Card(
+                            auth: auth,
+                            tabController: _tabController,
+                            loginEmail: _loginEmail, loginPassword: _loginPassword,
+                            regName: _regName, regEmail: _regEmail,
+                            regPassword: _regPassword, regArtist: _regArtist,
+                            accountType: _accountType,
+                            onTypeChanged: (v) => setState(() => _accountType = v),
+                          )),
+                        ]);
+                      }
+                      return SingleChildScrollView(child: _Card(
+                        auth: auth,
+                        tabController: _tabController,
+                        loginEmail: _loginEmail, loginPassword: _loginPassword,
+                        regName: _regName, regEmail: _regEmail,
+                        regPassword: _regPassword, regArtist: _regArtist,
+                        accountType: _accountType,
+                        onTypeChanged: (v) => setState(() => _accountType = v),
+                      ));
+                    },
+                  ),
+                ),
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
 }
 
-class _AuthHero extends StatelessWidget {
-  const _AuthHero();
+// ─── Orbe de luz de fondo ─────────────────────────────────────────────────────
+class _GlowOrb extends StatelessWidget {
+  const _GlowOrb({required this.color, required this.size});
+  final Color color;
+  final double size;
+  @override
+  Widget build(BuildContext context) => Container(
+    width: size, height: size,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      gradient: RadialGradient(colors: [
+        color.withValues(alpha: 0.35),
+        color.withValues(alpha: 0.0),
+      ]),
+    ),
+  );
+}
 
+// ─── Panel izquierdo hero ─────────────────────────────────────────────────────
+class _Hero extends StatelessWidget {
+  const _Hero();
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(32),
-        gradient: LinearGradient(
-          colors: [
-            colors.primary,
-            colors.secondary,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Logo
+        Container(
+          width: 64, height: 64,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: const LinearGradient(
+              colors: [_C.purple, _C.pink],
+              begin: Alignment.topLeft, end: Alignment.bottomRight,
+            ),
+          ),
+          child: const Icon(Icons.graphic_eq_rounded, color: _C.white, size: 36),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: colors.primary.withValues(alpha: 0.24),
-            blurRadius: 40,
-            offset: const Offset(0, 18),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          Icon(Icons.graphic_eq_rounded, color: Colors.white, size: 52),
-          SizedBox(height: 24),
-          Text(
-            'SoundStream',
+        const SizedBox(height: 28),
+        ShaderMask(
+          shaderCallback: (b) => const LinearGradient(
+            colors: [_C.white, _C.cyan],
+          ).createShader(b),
+          child: const Text('SoundStream',
             style: TextStyle(
-              color: Colors.white,
-              fontSize: 42,
-              fontWeight: FontWeight.w800,
+              color: _C.white, fontSize: 44,
+              fontWeight: FontWeight.w900, height: 1.1,
             ),
           ),
-          SizedBox(height: 16),
-          Text(
-            'Streaming, favoritos, playlists, historial y recomendacion inteligente en una sola app Flutter.',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              height: 1.45,
-            ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'Tu música, tus reglas.\nStreaming inteligente con\nrecomendaciones personalizadas.',
+          style: TextStyle(
+            color: _C.textMid, fontSize: 17, height: 1.6,
           ),
-          SizedBox(height: 28),
-          _HeroStat(
-            title: 'Listo para Web y Android',
-            subtitle: 'Conectado al backend REST actual',
-          ),
-          SizedBox(height: 14),
-          _HeroStat(
-            title: 'Roles reales',
-            subtitle: 'Usuario, artista y administrador',
-          ),
-          SizedBox(height: 14),
-          _HeroStat(
-            title: 'Flujo editorial mejorado',
-            subtitle: 'Canciones sueltas, albumes vacios y asignacion posterior',
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 40),
+        _FeatureRow(icon: Icons.bolt_rounded,     color: _C.purple, label: 'Recomendaciones con IA'),
+        const SizedBox(height: 16),
+        _FeatureRow(icon: Icons.favorite_rounded, color: _C.pink,   label: 'Favoritos y playlists'),
+        const SizedBox(height: 16),
+        _FeatureRow(icon: Icons.history_rounded,  color: _C.cyan,   label: 'Historial de escucha'),
+        const SizedBox(height: 16),
+        _FeatureRow(icon: Icons.mic_rounded,      color: _C.purple, label: 'Panel de artista'),
+      ],
     );
   }
 }
 
-class _HeroStat extends StatelessWidget {
-  const _HeroStat({
-    required this.title,
-    required this.subtitle,
-  });
-
-  final String title;
-  final String subtitle;
-
+class _FeatureRow extends StatelessWidget {
+  const _FeatureRow({required this.icon, required this.color, required this.label});
+  final IconData icon;
+  final Color color;
+  final String label;
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+    return Row(children: [
+      Container(
+        width: 40, height: 40,
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.18),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(icon, color: color, size: 20),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            subtitle,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.92),
-            ),
-          ),
-        ],
-      ),
-    );
+      const SizedBox(width: 14),
+      Text(label, style: const TextStyle(color: _C.white, fontSize: 15, fontWeight: FontWeight.w500)),
+    ]);
   }
 }
 
-class _AuthCard extends StatelessWidget {
-  const _AuthCard({
+// ─── Tarjeta de autenticación ─────────────────────────────────────────────────
+class _Card extends StatelessWidget {
+  const _Card({
     required this.auth,
     required this.tabController,
     required this.loginEmail,
     required this.loginPassword,
-    required this.registerName,
-    required this.registerEmail,
-    required this.registerPassword,
-    required this.registerArtistName,
+    required this.regName,
+    required this.regEmail,
+    required this.regPassword,
+    required this.regArtist,
     required this.accountType,
-    required this.onAccountTypeChanged,
+    required this.onTypeChanged,
   });
 
   final AuthController auth;
   final TabController tabController;
-  final TextEditingController loginEmail;
-  final TextEditingController loginPassword;
-  final TextEditingController registerName;
-  final TextEditingController registerEmail;
-  final TextEditingController registerPassword;
-  final TextEditingController registerArtistName;
+  final TextEditingController loginEmail, loginPassword;
+  final TextEditingController regName, regEmail, regPassword, regArtist;
   final String accountType;
-  final ValueChanged<String> onAccountTypeChanged;
+  final ValueChanged<String> onTypeChanged;
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
     return Container(
+      padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.92),
-        borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.8)),
+        color: _C.darkCard,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: _C.border),
         boxShadow: [
           BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.08),
-            blurRadius: 34,
-            offset: const Offset(0, 18),
+            color: _C.purple.withValues(alpha: 0.15),
+            blurRadius: 60, offset: const Offset(0, 20),
           ),
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(28),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Acceso',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          const Text('Bienvenido',
+            style: TextStyle(color: _C.white, fontSize: 26, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 6),
+          Text('Accede con tu cuenta o crea una nueva',
+            style: TextStyle(color: _C.textMid, fontSize: 14)),
+          const SizedBox(height: 24),
+
+          // Tabs
+          Container(
+            decoration: BoxDecoration(
+              color: _C.surface,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: TabBar(
+              controller: tabController,
+              dividerColor: Colors.transparent,
+              indicator: BoxDecoration(
+                gradient: const LinearGradient(colors: [_C.purple, _C.pink]),
+                borderRadius: BorderRadius.circular(11),
               ),
+              labelColor: _C.white,
+              unselectedLabelColor: _C.textMid,
+              labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+              tabs: const [Tab(text: 'Iniciar sesión'), Tab(text: 'Registrarse')],
             ),
-            const SizedBox(height: 10),
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text('Usa una cuenta demo o crea una nueva para empezar.'),
-            ),
-            const SizedBox(height: 22),
+          ),
+          const SizedBox(height: 24),
+
+          // Error
+          if (auth.error != null) ...[
             Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: colors.surfaceContainerHighest.withValues(alpha: 0.7),
-                borderRadius: BorderRadius.circular(18),
+                color: Colors.red.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
               ),
-              child: TabBar(
-                controller: tabController,
-                dividerColor: Colors.transparent,
-                indicator: BoxDecoration(
-                  color: colors.primary,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                labelColor: colors.onPrimary,
-                unselectedLabelColor: colors.onSurfaceVariant,
-                tabs: const [
-                  Tab(text: 'Iniciar sesion'),
-                  Tab(text: 'Registrarse'),
-                ],
-              ),
+              child: Row(children: [
+                const Icon(Icons.error_outline, color: Colors.redAccent, size: 18),
+                const SizedBox(width: 10),
+                Expanded(child: Text(auth.error!,
+                  style: const TextStyle(color: Colors.redAccent, fontSize: 13))),
+              ]),
             ),
-            const SizedBox(height: 18),
-            if (auth.error != null)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(14),
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  color: colors.errorContainer,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Text(
-                  auth.error!,
-                  style: TextStyle(color: colors.onErrorContainer),
-                ),
-              ),
-            SizedBox(
-              height: 440,
-              child: TabBarView(
-                controller: tabController,
-                children: [
-                  _LoginPanel(auth: auth, email: loginEmail, password: loginPassword),
-                  _RegisterPanel(
-                    auth: auth,
-                    name: registerName,
-                    email: registerEmail,
-                    password: registerPassword,
-                    artistName: registerArtistName,
-                    accountType: accountType,
-                    onAccountTypeChanged: onAccountTypeChanged,
-                  ),
-                ],
-              ),
-            ),
+            const SizedBox(height: 16),
           ],
+
+          // Tab content
+          SizedBox(
+            height: 420,
+            child: TabBarView(
+              controller: tabController,
+              children: [
+                _LoginPanel(auth: auth, email: loginEmail, password: loginPassword),
+                _RegisterPanel(
+                  auth: auth, name: regName, email: regEmail,
+                  password: regPassword, artistName: regArtist,
+                  accountType: accountType, onAccountTypeChanged: onTypeChanged,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Input field con estilo dark ──────────────────────────────────────────────
+class _DarkField extends StatelessWidget {
+  const _DarkField({
+    required this.controller,
+    required this.label,
+    required this.icon,
+    this.obscure = false,
+    this.keyboardType,
+  });
+  final TextEditingController controller;
+  final String label;
+  final IconData icon;
+  final bool obscure;
+  final TextInputType? keyboardType;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      obscureText: obscure,
+      keyboardType: keyboardType,
+      style: const TextStyle(color: _C.white, fontSize: 15),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(color: _C.textMid, fontSize: 14),
+        prefixIcon: Icon(icon, color: _C.textMid, size: 20),
+        filled: true,
+        fillColor: _C.surface,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: _C.border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: _C.purple, width: 1.5),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      ),
+    );
+  }
+}
+
+// ─── Botón degradado ──────────────────────────────────────────────────────────
+class _GradientButton extends StatelessWidget {
+  const _GradientButton({required this.label, required this.icon, required this.onPressed, required this.loading});
+  final String label;
+  final IconData icon;
+  final VoidCallback? onPressed;
+  final bool loading;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity, height: 52,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: onPressed == null
+              ? null
+              : const LinearGradient(colors: [_C.purple, _C.pink]),
+          color: onPressed == null ? _C.border : null,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onPressed,
+            borderRadius: BorderRadius.circular(14),
+            child: Center(
+              child: loading
+                  ? const SizedBox(width: 22, height: 22,
+                      child: CircularProgressIndicator(color: _C.white, strokeWidth: 2.5))
+                  : Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(icon, color: _C.white, size: 20),
+                      const SizedBox(width: 10),
+                      Text(label, style: const TextStyle(
+                        color: _C.white, fontWeight: FontWeight.w700, fontSize: 15)),
+                    ]),
+            ),
+          ),
         ),
       ),
     );
   }
 }
 
+// ─── Panel de login ───────────────────────────────────────────────────────────
 class _LoginPanel extends StatelessWidget {
-  const _LoginPanel({
-    required this.auth,
-    required this.email,
-    required this.password,
-  });
-
+  const _LoginPanel({required this.auth, required this.email, required this.password});
   final AuthController auth;
-  final TextEditingController email;
-  final TextEditingController password;
+  final TextEditingController email, password;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        TextField(
-          controller: email,
-          decoration: const InputDecoration(
-            labelText: 'Correo',
-            prefixIcon: Icon(Icons.mail_outline),
-          ),
-        ),
+        _DarkField(controller: email,    label: 'Correo',     icon: Icons.mail_outline,  keyboardType: TextInputType.emailAddress),
         const SizedBox(height: 14),
-        TextField(
-          controller: password,
-          obscureText: true,
-          decoration: const InputDecoration(
-            labelText: 'Contrasena',
-            prefixIcon: Icon(Icons.lock_outline),
-          ),
-        ),
-        const SizedBox(height: 18),
+        _DarkField(controller: password, label: 'Contraseña', icon: Icons.lock_outline,  obscure: true),
+        const SizedBox(height: 16),
+        // Demo hint
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerHigh,
-            borderRadius: BorderRadius.circular(18),
+            color: _C.purple.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: _C.purple.withValues(alpha: 0.25)),
           ),
-          child: const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Cuenta demo',
-                style: TextStyle(fontWeight: FontWeight.w700),
-              ),
-              SizedBox(height: 6),
-              Text('demo@soundstream.local'),
-              Text('Demo12345'),
-            ],
-          ),
+          child: Row(children: [
+            Icon(Icons.info_outline_rounded, color: _C.purple, size: 18),
+            const SizedBox(width: 10),
+            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const Text('Cuenta demo', style: TextStyle(color: _C.white, fontWeight: FontWeight.w700, fontSize: 13)),
+              const SizedBox(height: 3),
+              Text('demo@soundstream.local  ·  Demo12345',
+                style: TextStyle(color: _C.textMid, fontSize: 12)),
+            ]),
+          ]),
         ),
         const Spacer(),
-        SizedBox(
-          width: double.infinity,
-          child: FilledButton.icon(
-            onPressed: auth.isBusy
-                ? null
-                : () async {
-                    try {
-                      await auth.login(
-                        email: email.text.trim(),
-                        password: password.text,
-                      );
-                    } catch (_) {}
-                  },
-            icon: auth.isBusy
-                ? const SizedBox.square(
-                    dimension: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.login_rounded),
-            label: const Text('Entrar a SoundStream'),
-          ),
+        _GradientButton(
+          label: 'Entrar a SoundStream',
+          icon: Icons.login_rounded,
+          loading: auth.isBusy,
+          onPressed: auth.isBusy ? null : () async {
+            try {
+              await auth.login(email: email.text.trim(), password: password.text);
+            } catch (_) {}
+          },
         ),
       ],
     );
   }
 }
 
+// ─── Panel de registro ────────────────────────────────────────────────────────
 class _RegisterPanel extends StatelessWidget {
   const _RegisterPanel({
-    required this.auth,
-    required this.name,
-    required this.email,
-    required this.password,
-    required this.artistName,
-    required this.accountType,
-    required this.onAccountTypeChanged,
+    required this.auth, required this.name, required this.email,
+    required this.password, required this.artistName,
+    required this.accountType, required this.onAccountTypeChanged,
   });
-
   final AuthController auth;
-  final TextEditingController name;
-  final TextEditingController email;
-  final TextEditingController password;
-  final TextEditingController artistName;
+  final TextEditingController name, email, password, artistName;
   final String accountType;
   final ValueChanged<String> onAccountTypeChanged;
 
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      child: Column(
-        children: [
-          TextField(
-            controller: name,
-            decoration: const InputDecoration(
-              labelText: 'Nombre',
-              prefixIcon: Icon(Icons.person_outline),
-            ),
+      child: Column(children: [
+        _DarkField(controller: name,     label: 'Nombre',      icon: Icons.person_outline),
+        const SizedBox(height: 12),
+        _DarkField(controller: email,    label: 'Correo',      icon: Icons.mail_outline, keyboardType: TextInputType.emailAddress),
+        const SizedBox(height: 12),
+        _DarkField(controller: password, label: 'Contraseña',  icon: Icons.lock_outline, obscure: true),
+        const SizedBox(height: 12),
+        // Selector tipo de cuenta
+        Container(
+          decoration: BoxDecoration(
+            color: _C.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: _C.border),
           ),
+          child: Row(children: [
+            _TypeChip(label: 'Usuario', icon: Icons.person_rounded,
+              selected: accountType == 'user', onTap: () => onAccountTypeChanged('user')),
+            _TypeChip(label: 'Artista', icon: Icons.mic_rounded,
+              selected: accountType == 'artist', onTap: () => onAccountTypeChanged('artist')),
+          ]),
+        ),
+        if (accountType == 'artist') ...[
           const SizedBox(height: 12),
-          TextField(
-            controller: email,
-            decoration: const InputDecoration(
-              labelText: 'Correo',
-              prefixIcon: Icon(Icons.mail_outline),
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: password,
-            obscureText: true,
-            decoration: const InputDecoration(
-              labelText: 'Contrasena',
-              prefixIcon: Icon(Icons.lock_outline),
-            ),
-          ),
-          const SizedBox(height: 12),
-          DropdownButtonFormField<String>(
-            value: accountType,
-            decoration: const InputDecoration(
-              labelText: 'Tipo de cuenta',
-              prefixIcon: Icon(Icons.badge_outlined),
-            ),
-            items: const [
-              DropdownMenuItem(value: 'user', child: Text('Usuario')),
-              DropdownMenuItem(value: 'artist', child: Text('Artista')),
-            ],
-            onChanged: (value) {
-              if (value != null) {
-                onAccountTypeChanged(value);
-              }
-            },
-          ),
-          if (accountType == 'artist') ...[
-            const SizedBox(height: 12),
-            TextField(
-              controller: artistName,
-              decoration: const InputDecoration(
-                labelText: 'Nombre artistico',
-                prefixIcon: Icon(Icons.mic_none_rounded),
-              ),
-            ),
-          ],
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: auth.isBusy
-                  ? null
-                  : () async {
-                      try {
-                        await auth.register(
-                          name: name.text.trim(),
-                          email: email.text.trim(),
-                          password: password.text,
-                          accountType: accountType,
-                          artistName: accountType == 'artist' ? artistName.text.trim() : null,
-                        );
-                      } catch (_) {}
-                    },
-              icon: auth.isBusy
-                  ? const SizedBox.square(
-                      dimension: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.person_add_alt_1_rounded),
-              label: const Text('Crear cuenta'),
-            ),
-          ),
+          _DarkField(controller: artistName, label: 'Nombre artístico', icon: Icons.mic_none_rounded),
         ],
+        const SizedBox(height: 20),
+        _GradientButton(
+          label: 'Crear cuenta',
+          icon: Icons.person_add_alt_1_rounded,
+          loading: auth.isBusy,
+          onPressed: auth.isBusy ? null : () async {
+            try {
+              await auth.register(
+                name: name.text.trim(), email: email.text.trim(),
+                password: password.text, accountType: accountType,
+                artistName: accountType == 'artist' ? artistName.text.trim() : null,
+              );
+            } catch (_) {}
+          },
+        ),
+      ]),
+    );
+  }
+}
+
+class _TypeChip extends StatelessWidget {
+  const _TypeChip({required this.label, required this.icon, required this.selected, required this.onTap});
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          margin: const EdgeInsets.all(4),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            gradient: selected
+                ? const LinearGradient(colors: [_C.purple, _C.pink])
+                : null,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Icon(icon, color: selected ? _C.white : _C.textMid, size: 18),
+            const SizedBox(width: 8),
+            Text(label, style: TextStyle(
+              color: selected ? _C.white : _C.textMid,
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              fontSize: 14,
+            )),
+          ]),
+        ),
       ),
     );
   }
