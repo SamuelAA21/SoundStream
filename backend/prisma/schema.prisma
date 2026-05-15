@@ -1,0 +1,266 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Role {
+  id          BigInt   @id @default(autoincrement())
+  name        String   @unique @db.VarChar(50)
+  description String?  @db.VarChar(255)
+  createdAt   DateTime @default(now()) @map("created_at")
+  users       User[]
+
+  @@map("roles")
+}
+
+model User {
+  id           BigInt   @id @default(autoincrement())
+  roleId       BigInt   @map("role_id")
+  name         String   @db.VarChar(120)
+  email        String   @unique @db.VarChar(150)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  status       String   @default("active") @db.VarChar(20)
+  lastLoginAt  DateTime? @map("last_login_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  role            Role              @relation(fields: [roleId], references: [id])
+  favorites       Favorite[]
+  playHistory     PlayHistory[]
+  interactions    UserInteraction[]
+  recommendations Recommendation[]
+  refreshTokens   RefreshToken[]
+  playlists       Playlist[]
+  artistProfile   Artist?
+
+  @@map("users")
+}
+
+model Artist {
+  id          BigInt   @id @default(autoincrement())
+  ownerUserId BigInt?  @unique @map("owner_user_id")
+  name        String   @db.VarChar(150)
+  bio         String?
+  country     String?  @db.VarChar(100)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  owner         User?              @relation(fields: [ownerUserId], references: [id])
+  albums        Album[]
+  songs         Song[]
+  collaborations SongCollaborator[]
+
+  @@index([name])
+  @@map("artists")
+}
+
+model Genre {
+  id          BigInt   @id @default(autoincrement())
+  name        String   @unique @db.VarChar(100)
+  description String?  @db.VarChar(255)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  albums Album[]
+  songs  Song[]
+
+  @@map("genres")
+}
+
+model Album {
+  id             BigInt   @id @default(autoincrement())
+  artistId       BigInt   @map("artist_id")
+  genreId        BigInt?  @map("genre_id")
+  title          String   @db.VarChar(180)
+  releaseDate    DateTime? @map("release_date") @db.Date
+  coverImagePath String?  @map("cover_image_path") @db.VarChar(255)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  artist Artist @relation(fields: [artistId], references: [id])
+  genre  Genre? @relation(fields: [genreId], references: [id])
+  songs  Song[]
+
+  @@index([artistId])
+  @@index([title])
+  @@map("albums")
+}
+
+model Song {
+  id              BigInt   @id @default(autoincrement())
+  artistId        BigInt   @map("artist_id")
+  albumId         BigInt?  @map("album_id")
+  genreId         BigInt   @map("genre_id")
+  title           String   @db.VarChar(180)
+  durationSeconds Int      @map("duration_seconds")
+  trackNumber     Int?     @map("track_number")
+  releaseDate     DateTime? @map("release_date") @db.Date
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  artist          Artist            @relation(fields: [artistId], references: [id])
+  album           Album?            @relation(fields: [albumId], references: [id])
+  genre           Genre             @relation(fields: [genreId], references: [id])
+  audioFile       AudioFile?
+  favorites       Favorite[]
+  playHistory     PlayHistory[]
+  interactions    UserInteraction[]
+  recommendations Recommendation[]
+  playlistSongs   PlaylistSong[]
+  collaborators   SongCollaborator[]
+
+  @@index([title])
+  @@index([artistId, genreId, isActive])
+  @@index([albumId])
+  @@map("songs")
+}
+
+model SongCollaborator {
+  songId   BigInt @map("song_id")
+  artistId BigInt @map("artist_id")
+  role     String @default("featured") @db.VarChar(50)
+
+  song   Song   @relation(fields: [songId], references: [id], onDelete: Cascade)
+  artist Artist @relation(fields: [artistId], references: [id])
+
+  @@id([songId, artistId])
+  @@index([artistId])
+  @@map("song_collaborators")
+}
+
+model AudioFile {
+  id              BigInt   @id @default(autoincrement())
+  songId          BigInt   @unique @map("song_id")
+  storagePath     String   @unique @map("storage_path") @db.VarChar(255)
+  mimeType        String   @map("mime_type") @db.VarChar(100)
+  fileSizeBytes   BigInt   @map("file_size_bytes")
+  durationSeconds Int      @map("duration_seconds")
+  checksumSha256  String   @unique @map("checksum_sha256") @db.Char(64)
+  bitrateKbps     Int?     @map("bitrate_kbps")
+  sampleRateHz    Int?     @map("sample_rate_hz")
+  isAvailable     Boolean  @default(true) @map("is_available")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  song Song @relation(fields: [songId], references: [id])
+
+  @@map("audio_files")
+}
+
+model Favorite {
+  id        BigInt   @id @default(autoincrement())
+  userId    BigInt   @map("user_id")
+  songId    BigInt   @map("song_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+  song Song @relation(fields: [songId], references: [id])
+
+  @@unique([userId, songId])
+  @@index([songId])
+  @@map("favorites")
+}
+
+model Playlist {
+  id          BigInt   @id @default(autoincrement())
+  userId      BigInt   @map("user_id")
+  name        String   @db.VarChar(150)
+  description String?  @db.VarChar(255)
+  isPublic    Boolean  @default(false) @map("is_public")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user  User           @relation(fields: [userId], references: [id])
+  songs PlaylistSong[]
+
+  @@index([userId])
+  @@unique([userId, name])
+  @@map("playlists")
+}
+
+model PlaylistSong {
+  playlistId BigInt   @map("playlist_id")
+  songId     BigInt   @map("song_id")
+  position   Int
+  addedAt    DateTime @default(now()) @map("added_at")
+
+  playlist Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  song     Song     @relation(fields: [songId], references: [id])
+
+  @@id([playlistId, songId])
+  @@index([songId])
+  @@index([playlistId, position])
+  @@map("playlist_songs")
+}
+
+model PlayHistory {
+  id             BigInt   @id @default(autoincrement())
+  userId         BigInt   @map("user_id")
+  songId         BigInt   @map("song_id")
+  startedAt      DateTime @map("started_at")
+  endedAt        DateTime? @map("ended_at")
+  playedSeconds  Int      @default(0) @map("played_seconds")
+  completionRate Float    @default(0) @map("completion_rate")
+  deviceType     String   @map("device_type") @db.VarChar(20)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+  song Song @relation(fields: [songId], references: [id])
+
+  @@index([userId, startedAt])
+  @@index([songId, startedAt])
+  @@map("play_history")
+}
+
+model UserInteraction {
+  id               BigInt   @id @default(autoincrement())
+  userId           BigInt   @map("user_id")
+  songId           BigInt?  @map("song_id")
+  interactionType  String   @map("interaction_type") @db.VarChar(50)
+  interactionValue String?  @map("interaction_value") @db.VarChar(255)
+  metadataJson     Json?    @map("metadata_json")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  user User  @relation(fields: [userId], references: [id])
+  song Song? @relation(fields: [songId], references: [id])
+
+  @@index([userId, interactionType, createdAt])
+  @@index([songId])
+  @@map("user_interactions")
+}
+
+model Recommendation {
+  id          BigInt   @id @default(autoincrement())
+  userId      BigInt   @map("user_id")
+  songId      BigInt   @map("song_id")
+  score       Float
+  source      String   @default("hybrid") @db.VarChar(30)
+  reasonText  String?  @map("reason_text") @db.VarChar(255)
+  generatedAt DateTime @default(now()) @map("generated_at")
+  expiresAt   DateTime? @map("expires_at")
+
+  user User @relation(fields: [userId], references: [id])
+  song Song @relation(fields: [songId], references: [id])
+
+  @@index([userId, score])
+  @@index([generatedAt])
+  @@map("recommendations")
+}
+
+model RefreshToken {
+  id        BigInt   @id @default(autoincrement())
+  userId    BigInt   @map("user_id")
+  tokenHash String   @unique @map("token_hash") @db.Char(64)
+  expiresAt DateTime @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, expiresAt])
+  @@map("refresh_tokens")
+}
