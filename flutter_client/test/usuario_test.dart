@@ -139,7 +139,7 @@ void main() {
       test('DEBE retornar TRUE para password muy largo', () {
         var usuario = Usuario(
           email: 'juan@example.com',
-          password: 'MiContraseñaMuySegura123!@#$%',
+          password: 'MiContraseñaMuySegura123!@#\$%',
           nombre: 'Juan Pérez',
         );
         
