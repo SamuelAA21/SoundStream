@@ -348,6 +348,36 @@ Ejemplo de `API_BASE_URL` para clientes conectados a ZeroTier:
 
 - `http://IP_ZEROTIER_SERVIDOR:3000/api`
 
+### Frontend web privado con `soundstream.test`
+
+Para evitar CORS en Flutter Web dentro de la red privada, la estrategia recomendada es:
+
+- servir el frontend web desde la misma VM
+- publicar el frontend bajo `http://soundstream.test`
+- publicar la API bajo `http://soundstream.test/api`
+- dejar que `nginx` haga proxy a `127.0.0.1:3000`
+
+Archivos de apoyo agregados al repo:
+
+- `deploy/nginx/soundstream.test.conf`
+- `deploy/dnsmasq/soundstream.test.conf`
+
+Flujo recomendado:
+
+1. Construir Flutter Web.
+2. Copiar el contenido de `flutter_client/build/web` a `/srv/soundstream/web`.
+3. Instalar y configurar `nginx` con `deploy/nginx/soundstream.test.conf`.
+4. Resolver `soundstream.test` hacia la IP ZeroTier del servidor usando `dnsmasq` o DNS privado equivalente.
+5. Ajustar `WEB_ORIGIN` y `WEB_ORIGINS` del backend para `http://soundstream.test`.
+
+Build recomendado para web privada:
+
+```bash
+flutter build web
+```
+
+El cliente Flutter ya esta preparado para que, en Web, si no corre sobre `localhost`, use `/api` como base por defecto. Eso permite que el frontend servido desde `soundstream.test` consuma la API del mismo host sin depender de CORS ni de un `dart-define` adicional.
+
 ## Flujo de actualizacion del servidor
 
 El flujo recomendado de mantenimiento es:
