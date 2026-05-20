@@ -89,6 +89,7 @@ Scripts disponibles:
 - `npm run lint`: valida tipos con `tsc --noEmit`.
 - `npm run prisma:generate`: genera el cliente Prisma.
 - `npm run prisma:migrate`: ejecuta migraciones en desarrollo.
+- `npm run prisma:deploy`: aplica migraciones en servidor o produccion.
 - `npm run prisma:seed`: carga datos demo.
 
 ### Arquitectura del backend
@@ -320,6 +321,63 @@ Configuracion actual:
 - `WEB_ORIGINS` permite varios origenes separados por comas
 
 Si ejecutas Flutter Web en `http://localhost:5173`, ese valor debe estar permitido en el backend.
+
+## Despliegue en servidor con ZeroTier
+
+Para el despliegue privado actual se esta usando una VM Ubuntu Server unida a una red de ZeroTier.
+
+Arquitectura operativa recomendada:
+
+- dispositivos cliente conectados a la red ZeroTier
+- backend Fastify escuchando en `0.0.0.0:3000`
+- PostgreSQL local en la VM escuchando solo en `127.0.0.1:5432`
+- almacenamiento persistente de audio fuera del repo, por ejemplo `/srv/soundstream/audio`
+
+Principios de este despliegue:
+
+- los clientes nunca acceden directo a PostgreSQL
+- el backend es el unico proceso que usa `DATABASE_URL`
+- la VM debe poder actualizar el repo con `git pull`
+- el codigo fuente no se edita manualmente en el servidor
+
+Archivo recomendado para variables de entorno productivas:
+
+- `backend/.env.production.example`
+
+Ejemplo de `API_BASE_URL` para clientes conectados a ZeroTier:
+
+- `http://IP_ZEROTIER_SERVIDOR:3000/api`
+
+## Flujo de actualizacion del servidor
+
+El flujo recomendado de mantenimiento es:
+
+1. Hacer cambios en Windows o en el entorno de desarrollo local.
+2. Probar y subir cambios al repositorio remoto.
+3. Entrar a la VM y actualizar el codigo con Git.
+4. Instalar dependencias si cambiaron.
+5. Aplicar migraciones productivas.
+6. Compilar y reiniciar el servicio del backend.
+
+Comandos tipicos dentro de la VM:
+
+```bash
+cd /srv/soundstream/app
+git pull --ff-only origin Implementacion-de-servidor
+cd backend
+npm ci
+npm run prisma:deploy
+npm run build
+sudo systemctl restart soundstream-backend
+sudo systemctl status soundstream-backend
+```
+
+Verificaciones utiles:
+
+```bash
+curl http://127.0.0.1:3000/health
+curl http://IP_ZEROTIER_SERVIDOR:3000/health
+```
 
 ## Flujo recomendado de arranque
 
