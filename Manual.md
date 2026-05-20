@@ -330,7 +330,48 @@ Ese script:
 - compila `flutter build web`
 - valida y recarga `nginx`
 
-## 8. Que revisar si algo falla
+## 8. Que pasa si la PC-servidor esta apagada
+
+Si la PC donde vive la VM esta apagada:
+
+- el entorno compartido deja de estar disponible
+- `http://10.91.104.92` deja de responder
+- la base de datos central ya no esta accesible
+- los testers no pueden usar el servidor privado
+
+Pero eso no impide seguir desarrollando.
+
+Cada compañero puede trabajar localmente levantando:
+
+- su propio backend local
+- su propia base de datos PostgreSQL local
+- su propio frontend Flutter local
+
+El flujo local recomendado es el del `README.md`:
+
+```powershell
+cd backend
+npm install
+npm run prisma:generate
+npm run prisma:migrate
+npm run prisma:seed
+npm run dev
+```
+
+Y en otra terminal:
+
+```powershell
+cd flutter_client
+flutter pub get
+flutter run -d chrome --web-port 5173 --dart-define=API_BASE_URL=http://localhost:3000/api
+```
+
+La regla practica es esta:
+
+- servidor privado encendido -> pruebas compartidas e integracion
+- servidor privado apagado -> desarrollo local por cada compañero
+
+## 9. Que revisar si algo falla
 
 ### Caso 1: la pagina no abre
 
@@ -418,7 +459,7 @@ Si el backend no conecta, valida `DATABASE_URL` en:
 /srv/soundstream/app/backend/.env
 ```
 
-## 9. Comandos de emergencia mas utiles
+## 10. Comandos de emergencia mas utiles
 
 ### Estado general
 
@@ -461,7 +502,7 @@ curl http://127.0.0.1/api/catalog/songs
 curl http://10.91.104.92/health
 ```
 
-## 10. Backups minimos recomendados
+## 11. Backups minimos recomendados
 
 Si esto empieza a usarse de forma seria, al menos debes respaldar:
 
@@ -479,7 +520,7 @@ Y aparte:
 
 - copiar `/srv/soundstream/audio`
 
-## 11. Regla mental para no perderse
+## 12. Regla mental para no perderse
 
 Si algo falla, piensa en capas:
 

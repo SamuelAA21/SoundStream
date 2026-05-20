@@ -72,6 +72,24 @@ cd flutter_client
 flutter run -d emulator-5554 --dart-define=API_BASE_URL=http://10.0.2.2:3000/api
 ```
 
+## Trabajo sin servidor compartido
+
+Si la PC donde corre la VM del servidor esta apagada:
+
+- deja de estar disponible `http://10.91.104.92`
+- no se puede usar la base de datos central compartida
+- los testers no pueden entrar al entorno privado
+
+Pero el desarrollo no se detiene. Cada compañero puede seguir trabajando de forma local levantando su propia copia del proyecto con los comandos de `Inicio rapido local`.
+
+En ese escenario, cada desarrollador usa:
+
+- su propio backend local
+- su propia base de datos PostgreSQL local
+- su propio frontend Flutter local
+
+El servidor privado actual debe entenderse como entorno de integracion, demo y pruebas compartidas, no como unico punto para desarrollar.
+
 ## Despliegue privado actual
 
 Topologia actual:
