@@ -1,42 +1,96 @@
 # SoundStream
 
-## Resumen
+## Objetivo
 
-Este repositorio contiene dos aplicaciones principales:
+SoundStream es un sistema de streaming musical en tiempo real con:
 
-- `backend`: API REST en Fastify + Prisma sobre PostgreSQL.
-- `flutter_client`: cliente Flutter conectado al backend real.
+- backend REST en Fastify + Prisma + PostgreSQL
+- cliente Flutter para Web y Android
+- autenticacion con JWT y refresh token
+- catalogo, favoritos, playlists, historial y recomendaciones
+- modulo artista y modulo administrador
 
-El proyecto implementa autenticacion con JWT, catalogo musical, favoritos, playlists, historial, recomendaciones, streaming protegido, herramientas para artistas y operaciones administrativas.
+El proyecto sigue una arquitectura monolitica con backend y frontend separados, segun los lineamientos de [requerimientos.md](requerimientos.md).
+
+## Estado actual del proyecto
+
+Hoy el repositorio ya tiene:
+
+- backend funcional en `backend`
+- cliente Flutter funcional en `flutter_client`
+- despliegue privado funcional sobre una VM Ubuntu Server
+- PostgreSQL fijo en servidor
+- frontend web servido por `nginx`
+- backend levantado como servicio `systemd`
+- acceso privado multiusuario por red ZeroTier
+
+Estado del acceso:
+
+- Android APK: funcional contra el servidor
+- Flutter Web: funcional servido desde la VM
+- acceso para testers: por IP privada ZeroTier del servidor
+- acceso publico por Internet: no implementado todavia
+
+Para operacion, mantenimiento y procedimientos de emergencia, consulta tambien [Manual.md](Manual.md).
 
 ## Estructura del repositorio
 
 ```text
 SoundStream/
 |- backend/
-|  |- prisma/
-|  |- src/
-|  |  |- config/
-|  |  |- middlewares/
-|  |  |- modules/
-|  |  |- routes/
-|  |  \- utils/
-|  \- __tests__/
+|- deploy/
+|  |- dnsmasq/
+|  |- nginx/
+|  \- scripts/
 |- flutter_client/
-|  |- lib/src/
-|  |  |- controllers/
-|  |  |- core/
-|  |  |- models/
-|  |  |- services/
-|  |  \- views/
-|  \- test/
 |- documentation.md
+|- README.md
 \- requerimientos.md
 ```
 
-## Backend
+## Arquitectura
 
-### Stack
+### Backend
+
+El backend esta organizado por modulos y capas:
+
+- `controllers`: reciben requests y devuelven respuestas
+- `services`: contienen logica de negocio
+- `repositories`: acceden a base de datos con Prisma
+- `middlewares`: auth, roles, errores y validacion
+
+Modulos actuales:
+
+- `auth`
+- `catalog`
+- `favorites`
+- `playlists`
+- `history`
+- `recommendations`
+- `streaming`
+- `artist`
+- `admin`
+
+### Frontend
+
+El cliente Flutter usa una estructura MVC ligera:
+
+- `models`
+- `services`
+- `controllers`
+- `views`
+- `core`
+
+Detalles importantes:
+
+- usa `Provider + ChangeNotifier`
+- la sesion se persiste localmente
+- el cliente intenta refresh silencioso del token
+- en Web, fuera de `localhost`, el cliente usa `/api` como base por defecto para evitar CORS cuando esta detras de `nginx`
+
+## Stack tecnologico
+
+### Backend
 
 - Node.js
 - Fastify
@@ -44,9 +98,25 @@ SoundStream/
 - PostgreSQL
 - Zod
 - JWT
-- Multipart para carga de audio
 
-### Variables de entorno
+### Frontend
+
+- Flutter
+- Provider
+- HTTP
+- Shared Preferences
+- Audioplayers
+- File Picker
+
+### Infraestructura privada actual
+
+- Ubuntu Server
+- `systemd`
+- `nginx`
+- `ZeroTier`
+- `dnsmasq` opcional
+
+## Variables de entorno del backend
 
 El backend valida estas variables desde `backend/src/config/env.ts`:
 
@@ -63,13 +133,14 @@ WEB_ORIGIN=http://localhost:5173
 WEB_ORIGINS=http://localhost:5173,http://localhost:3001
 ```
 
-Notas:
+Archivos utiles:
 
-- `DATABASE_URL` y `JWT_SECRET` son obligatorias.
-- Si defines `WEB_ORIGINS`, el backend aceptara multiples origenes separados por comas.
-- El endpoint de salud publica es `GET /health`.
+- desarrollo local: `backend/.env`
+- ejemplo productivo: `backend/.env.production.example`
 
-### Instalacion y arranque
+## Scripts relevantes
+
+### Backend
 
 Desde `backend/`:
 
@@ -83,36 +154,36 @@ npm run dev
 
 Scripts disponibles:
 
-- `npm run dev`: desarrollo con `tsx watch`.
-- `npm run build`: compila TypeScript.
-- `npm run start`: ejecuta la version compilada.
-- `npm run lint`: valida tipos con `tsc --noEmit`.
-- `npm run prisma:generate`: genera el cliente Prisma.
-- `npm run prisma:migrate`: ejecuta migraciones en desarrollo.
-- `npm run prisma:deploy`: aplica migraciones en servidor o produccion.
-- `npm run prisma:seed`: carga datos demo.
+- `npm run dev`
+- `npm run build`
+- `npm run start`
+- `npm run lint`
+- `npm run prisma:generate`
+- `npm run prisma:migrate`
+- `npm run prisma:deploy`
+- `npm run prisma:seed`
 
-### Arquitectura del backend
+### Frontend
 
-El backend esta organizado por modulos:
+Desde `flutter_client/`:
 
-- `auth`
-- `catalog`
-- `favorites`
-- `playlists`
-- `history`
-- `recommendations`
-- `streaming`
-- `artist`
-- `admin`
+```powershell
+flutter pub get
+flutter run -d chrome --web-port 5173 --dart-define=API_BASE_URL=http://localhost:3000/api
+```
 
-Cada modulo sigue una separacion por `controllers`, `services` y `repositories`.
+Builds utiles:
 
-### Rutas expuestas
+```powershell
+flutter build web
+flutter build apk --dart-define=API_BASE_URL=http://10.0.2.2:3000/api
+```
+
+## Rutas expuestas por el backend
 
 Todas las rutas del negocio cuelgan de `/api`.
 
-#### Auth
+### Auth
 
 - `GET /api/auth/me`
 - `POST /api/auth/register`
@@ -120,20 +191,20 @@ Todas las rutas del negocio cuelgan de `/api`.
 - `POST /api/auth/refresh`
 - `POST /api/auth/logout`
 
-#### Catalogo
+### Catalogo
 
 - `GET /api/catalog/albums`
 - `GET /api/catalog/albums/:albumId`
 - `GET /api/catalog/songs`
 - `GET /api/catalog/songs/:songId`
 
-#### Favoritos
+### Favoritos
 
 - `GET /api/favorites`
 - `POST /api/favorites/:songId`
 - `DELETE /api/favorites/:songId`
 
-#### Playlists
+### Playlists
 
 - `GET /api/playlists`
 - `POST /api/playlists`
@@ -141,22 +212,22 @@ Todas las rutas del negocio cuelgan de `/api`.
 - `POST /api/playlists/:playlistId/songs/:songId`
 - `DELETE /api/playlists/:playlistId/songs/:songId`
 
-#### Historial
+### Historial
 
 - `GET /api/history`
 - `POST /api/history/plays`
 - `POST /api/history/interactions`
 
-#### Recomendaciones
+### Recomendaciones
 
 - `GET /api/recommendations`
 - `POST /api/recommendations/refresh`
 
-#### Streaming
+### Streaming
 
 - `GET /api/stream/songs/:songId`
 
-#### Artista
+### Artista
 
 - `GET /api/artist/songs`
 - `POST /api/artist/songs`
@@ -165,7 +236,7 @@ Todas las rutas del negocio cuelgan de `/api`.
 - `PATCH /api/artist/songs/:songId/album`
 - `POST /api/artist/albums`
 
-#### Admin
+### Admin
 
 - `GET /api/admin/users`
 - `PATCH /api/admin/users/:userId/status`
@@ -174,9 +245,9 @@ Todas las rutas del negocio cuelgan de `/api`.
 - `PATCH /api/admin/songs/:songId/album`
 - `POST /api/admin/albums`
 
-### Modelo de datos
+## Modelo de datos
 
-Las entidades principales definidas en `backend/prisma/schema.prisma` son:
+Entidades principales en `backend/prisma/schema.prisma`:
 
 - `Role`
 - `User`
@@ -194,25 +265,14 @@ Las entidades principales definidas en `backend/prisma/schema.prisma` son:
 - `Recommendation`
 - `RefreshToken`
 
-Detalles relevantes del modelo actual:
+Notas del modelo actual:
 
-- Una cancion puede existir sin album.
-- Un album puede existir vacio.
-- Las colaboraciones entre artistas se guardan en `SongCollaborator`.
-- El streaming se apoya en `AudioFile` y almacenamiento local en `backend/storage/audio`.
+- una cancion puede existir sin album
+- un album puede existir vacio
+- las colaboraciones se modelan con `SongCollaborator`
+- los archivos reales se guardan fuera de la base de datos
 
-### Seed y credenciales demo
-
-El seed crea:
-
-- roles `admin`, `user` y `artist`
-- usuario admin
-- usuario artista con perfil de artista
-- usuario demo comun
-- genero `Electronic`
-- artista `SoundStream Lab`
-- album `V1 Sessions`
-- cancion `Demo Track`
+## Seed y credenciales demo
 
 Credenciales:
 
@@ -220,184 +280,106 @@ Credenciales:
 - Artista: `artist@soundstream.local` / `Artist12345`
 - Usuario: `demo@soundstream.local` / `Demo12345`
 
-## Flutter client
+Importante:
 
-### Stack
+- el seed actual crea la metadata demo
+- la cancion demo queda con `audioFile.isAvailable = false`
+- por eso el catalogo puede verse vacio hasta subir un archivo real de audio
 
-- Flutter
-- Provider
-- HTTP
-- Shared Preferences
-- Audioplayers
-- File Picker
+## Streaming y carga de audio
 
-### Arquitectura del cliente
+### Streaming
 
-El cliente usa una estructura tipo MVC ligera:
+El backend expone:
 
-- `models`: modelos de dominio y serializacion.
-- `services`: llamadas HTTP al backend.
-- `controllers`: estado de UI con `ChangeNotifier`.
-- `views`: pantallas y widgets.
-- `core`: configuracion, cliente API, sesion persistida y service locator.
+- `GET /api/stream/songs/:songId`
 
-El arranque se hace desde `flutter_client/lib/main.dart` y centraliza dependencias en `lib/src/core/service_locator.dart`.
+Detalles:
 
-### Funcionalidad implementada
+- requiere autenticacion
+- soporta `Range`
+- puede responder `206 Partial Content`
+- el cliente Flutter reproduce audio autenticado descargado como bytes
 
-- Login, registro y cierre de sesion.
-- Persistencia de sesion con `shared_preferences`.
-- Refresh de sesion ante expiracion del access token.
-- Consulta de canciones y albumes.
-- Busqueda de canciones.
-- Favoritos.
-- Playlists.
-- Historial.
-- Recomendaciones.
-- Reproduccion de audio desde endpoint protegido.
-- Modulo de artista para subir, publicar, eliminar y agrupar canciones.
-- Modulo admin para usuarios, canciones y albumes.
+### Uploads
 
-### Configuracion de `API_BASE_URL`
+El backend acepta hasta `50 MB` por archivo.
 
-La app acepta `--dart-define=API_BASE_URL=...`.
+En el despliegue privado con `nginx`, tambien se ajusto:
 
-Si no se define, `flutter_client/lib/src/core/app_config.dart` usa estos valores por defecto:
+- `client_max_body_size 60m`
 
-- Web: `http://localhost:3000/api`
-- Android: `http://10.0.2.2:3000/api`
-- Otros targets: `http://localhost:3000/api`
+para que `nginx` no bloquee antes de que el backend valide el archivo.
 
-### Ejecucion
+## Despliegue privado actual
 
-Desde `flutter_client/`:
+### Topologia actual
 
-```powershell
-flutter pub get
-flutter run -d chrome --web-port 5173 --dart-define=API_BASE_URL=http://localhost:3000/api
+La topologia funcional hoy es:
+
+```text
+Cliente dentro de ZeroTier
+  -> http://10.91.104.92
+  -> nginx en la VM
+  -> /api -> backend Fastify
+  -> PostgreSQL local
+  -> /srv/soundstream/audio
 ```
 
-Para Android Emulator:
+### Servidor
 
-```powershell
-flutter run -d emulator-5554 --dart-define=API_BASE_URL=http://10.0.2.2:3000/api
-```
+El servidor privado actual usa:
 
-Build web:
+- VM Ubuntu Server
+- repo clonado en `/srv/soundstream/app`
+- backend como servicio `systemd`
+- frontend web servido por `nginx`
+- PostgreSQL local en `127.0.0.1:5432`
+- audio persistente en `/srv/soundstream/audio`
 
-```powershell
-flutter build web --dart-define=API_BASE_URL=http://localhost:3000/api
-```
+### Acceso recomendado actual
 
-Build APK:
-
-```powershell
-flutter build apk --dart-define=API_BASE_URL=http://10.0.2.2:3000/api
-```
-
-Aunque el proyecto Flutter incluye carpetas generadas para Windows, Linux, macOS e iOS, la configuracion documentada y validada en el codigo esta enfocada en Web y Android.
-
-## Streaming
-
-El flujo actual funciona asi:
-
-- el backend expone `GET /api/stream/songs/:songId`
-- la ruta exige autenticacion
-- el backend soporta `Range` y puede responder `206 Partial Content`
-- el cliente Flutter descarga el audio autenticado y lo reproduce como bytes con `audioplayers`
-
-Implicacion practica:
-
-- el servidor si soporta streaming parcial
-- el cliente actual no explota ese `Range` de forma avanzada para seek remoto; el control de avance/retroceso opera sobre el audio ya cargado en el reproductor
-
-## CORS
-
-El backend restringe origenes para clientes web.
-
-Configuracion actual:
-
-- `WEB_ORIGIN` define un origen principal
-- `WEB_ORIGINS` permite varios origenes separados por comas
-
-Si ejecutas Flutter Web en `http://localhost:5173`, ese valor debe estar permitido en el backend.
-
-## Despliegue en servidor con ZeroTier
-
-Para el despliegue privado actual se esta usando una VM Ubuntu Server unida a una red de ZeroTier.
-
-Arquitectura operativa recomendada:
-
-- dispositivos cliente conectados a la red ZeroTier
-- backend Fastify escuchando en `0.0.0.0:3000`
-- PostgreSQL local en la VM escuchando solo en `127.0.0.1:5432`
-- almacenamiento persistente de audio fuera del repo, por ejemplo `/srv/soundstream/audio`
-
-Principios de este despliegue:
-
-- los clientes nunca acceden directo a PostgreSQL
-- el backend es el unico proceso que usa `DATABASE_URL`
-- la VM debe poder actualizar el repo con `git pull`
-- el codigo fuente no se edita manualmente en el servidor
-
-Archivo recomendado para variables de entorno productivas:
-
-- `backend/.env.production.example`
-
-Ejemplo de `API_BASE_URL` para clientes conectados a ZeroTier:
-
-- `http://IP_ZEROTIER_SERVIDOR:3000/api`
-
-### Frontend web privado con IP de ZeroTier o `soundstream.test`
-
-Para evitar CORS en Flutter Web dentro de la red privada, la estrategia recomendada es:
-
-- servir el frontend web desde la misma VM
-- publicar el frontend bajo `http://10.91.104.92`
-- publicar la API bajo `http://10.91.104.92/api`
-- dejar que `nginx` haga proxy a `127.0.0.1:3000`
-
-Si se quiere usar `soundstream.test`, puede hacerse con archivo `hosts` o con DNS privado. Pero para evitar depender de DNS gestionado pago, la opcion mas simple es usar directamente la IP ZeroTier del servidor.
-
-Archivos de apoyo agregados al repo:
-
-- `deploy/nginx/soundstream.test.conf`
-- `deploy/dnsmasq/soundstream.test.conf`
-- `deploy/scripts/update_server.sh`
-
-Flujo recomendado:
-
-1. Construir Flutter Web.
-2. Servir el build directamente desde el repo clonado en la VM.
-3. Instalar y configurar `nginx` con `deploy/nginx/soundstream.test.conf`.
-4. Opcionalmente resolver `soundstream.test` hacia la IP ZeroTier del servidor usando `dnsmasq` o DNS privado equivalente.
-5. Ajustar `WEB_ORIGIN` y `WEB_ORIGINS` del backend para `http://10.91.104.92`.
-
-Build recomendado para web privada:
-
-```bash
-flutter build web
-```
-
-El `root` recomendado para `nginx` es:
-
-- `/srv/soundstream/app/flutter_client/build/web`
-
-El cliente Flutter ya esta preparado para que, en Web, si no corre sobre `localhost`, use `/api` como base por defecto. Eso permite que el frontend servido desde `soundstream.test` consuma la API del mismo host sin depender de CORS ni de un `dart-define` adicional.
-
-Acceso recomendado para testers si no se usa DNS privado gestionado:
+Para pruebas privadas y testers, el acceso recomendado es:
 
 - `http://10.91.104.92`
 
-### Despliegue automatico desde la VM
+Notas:
 
-Si el servidor ya tiene el repo clonado en `/srv/soundstream/app`, el despliegue recomendado es construir backend y frontend directamente en la VM.
+- no requiere DNS gestionado pago
+- no requiere editar el frontend por tester
+- cada tester debe estar dentro de la red ZeroTier
 
-Script de apoyo:
+### `soundstream.test`
+
+El repo incluye soporte para `soundstream.test`, pero hoy esa ruta es opcional.
+
+Archivos relacionados:
+
+- `deploy/nginx/soundstream.test.conf`
+- `deploy/dnsmasq/soundstream.test.conf`
+
+Como ZeroTier Custom DNS no esta disponible en el plan actual, la forma mas simple de acceso entre testers es usar directamente la IP de ZeroTier.
+
+## Flujo de actualizacion del servidor
+
+El servidor no se usa como entorno de desarrollo.
+
+Flujo correcto:
+
+1. hacer cambios en Windows
+2. probar localmente
+3. `git push`
+4. en la VM hacer `git pull`
+5. recompilar backend y frontend
+6. reiniciar o recargar servicios
+
+### Script de despliegue
+
+Se agrego:
 
 - `deploy/scripts/update_server.sh`
 
-Ejemplo de uso:
+Uso:
 
 ```bash
 cd /srv/soundstream/app
@@ -406,82 +388,97 @@ bash deploy/scripts/update_server.sh
 
 El script:
 
-- actualiza el repo con `git pull`
+- actualiza el repo
 - instala dependencias del backend
-- aplica migraciones con `npm run prisma:deploy`
-- compila el backend y reinicia `soundstream-backend`
+- aplica migraciones productivas
+- compila backend
+- reinicia `soundstream-backend`
 - ejecuta `flutter pub get`
 - compila `flutter build web`
 - valida y recarga `nginx`
 
-Con este flujo ya no hace falta copiar manualmente `flutter_client/build/web` a otra carpeta del servidor en cada cambio.
+### Requisitos del script
 
-## Flujo de actualizacion del servidor
+En la VM deben existir:
 
-El flujo recomendado de mantenimiento es:
+- `git`
+- `npm`
+- `flutter`
+- `nginx`
+- `sudo`
 
-1. Hacer cambios en Windows o en el entorno de desarrollo local.
-2. Probar y subir cambios al repositorio remoto.
-3. Entrar a la VM y actualizar el codigo con Git.
-4. Instalar dependencias si cambiaron.
-5. Aplicar migraciones productivas.
-6. Compilar y reiniciar el servicio del backend.
+## Servicios del servidor
 
-Comandos tipicos dentro de la VM:
+### Backend
+
+Servicio:
+
+- `soundstream-backend`
+
+Comandos utiles:
 
 ```bash
-cd /srv/soundstream/app
-git pull --ff-only origin Implementacion-de-servidor
-cd backend
-npm ci
-npm run prisma:deploy
-npm run build
-sudo systemctl restart soundstream-backend
 sudo systemctl status soundstream-backend
+sudo systemctl restart soundstream-backend
+journalctl -u soundstream-backend -f
 ```
 
-Verificaciones utiles:
+### Nginx
+
+Comandos utiles:
+
+```bash
+sudo nginx -t
+sudo systemctl restart nginx
+sudo systemctl reload nginx
+sudo systemctl status nginx
+```
+
+### PostgreSQL
+
+Comandos utiles:
+
+```bash
+sudo systemctl status postgresql
+sudo -u postgres psql
+```
+
+## Pruebas recomendadas
+
+### Salud del backend
 
 ```bash
 curl http://127.0.0.1:3000/health
-curl http://IP_ZEROTIER_SERVIDOR:3000/health
+curl http://10.91.104.92:3000/health
 ```
 
-## Flujo recomendado de arranque
+### Salud del frontend publicado
 
-1. Configurar variables de entorno del backend.
-2. Levantar PostgreSQL.
-3. Ejecutar migraciones y seed en `backend/`.
-4. Iniciar el backend en puerto `3000`.
-5. Ejecutar Flutter con `API_BASE_URL` apuntando a `http://localhost:3000/api` o `http://10.0.2.2:3000/api` en Android.
-6. Iniciar sesion con una cuenta demo o registrar una nueva.
+```bash
+curl http://10.91.104.92/health
+curl http://10.91.104.92/api/catalog/songs
+```
 
-## Pruebas
+### Navegador
 
-El repositorio incluye archivos de prueba en:
+Abrir:
 
-- `backend/__tests__`
-- `flutter_client/test`
+- `http://10.91.104.92`
 
-Estado actual observado:
+### Login demo
 
-- en `backend/package.json` no hay script `test`
-- los tests del backend no parecen estar integrados al codigo real actual
-- los tests del cliente Flutter son pruebas simples de clases de ejemplo, no cubren el flujo completo de la app
+Usar:
 
-Por eso, hoy la validacion mas confiable sigue siendo:
+- `demo@soundstream.local` / `Demo12345`
 
-- `backend`: `npm run lint`
-- `flutter_client`: `flutter analyze`
-- pruebas manuales de login, catalogo, playlists, favoritos, historial, recomendaciones y streaming
+## Limitaciones actuales
 
-## Limitaciones y observaciones actuales
-
-- La documentacion previa mezclaba ejemplos con `3000` y `4000`; el codigo actual usa `3000` como puerto por defecto del backend.
-- La UI Flutter es funcional, pero no representa una capa final de producto.
-- El cliente no implementa un streaming remoto avanzado con seek por rangos.
-- El backend almacena audio localmente en `backend/storage/audio`.
-- Hay archivos generados de Flutter modificados en plataformas de escritorio, asi que conviene revisar el estado de Git antes de hacer cambios adicionales.
+- el acceso actual es privado, no publico
+- los usuarios necesitan acceso a la red ZeroTier
+- el seed no deja una pista publica reproducible por defecto
+- la UI es funcional, no final de producto
+- el cliente no usa seek remoto avanzado por `Range`
+- no hay pipeline CI/CD formal todavia
 
 ## Archivos clave
 
@@ -493,27 +490,30 @@ Backend:
 - `backend/prisma/schema.prisma`
 - `backend/prisma/seed.ts`
 
-Flutter:
+Despliegue:
+
+- `deploy/nginx/soundstream.test.conf`
+- `deploy/dnsmasq/soundstream.test.conf`
+- `deploy/scripts/update_server.sh`
+
+Frontend:
 
 - `flutter_client/lib/main.dart`
 - `flutter_client/lib/src/app.dart`
 - `flutter_client/lib/src/core/app_config.dart`
 - `flutter_client/lib/src/core/service_locator.dart`
-- `flutter_client/lib/src/core/api_client.dart`
 - `flutter_client/lib/src/controllers/controllers.dart`
 - `flutter_client/lib/src/services/services.dart`
-- `flutter_client/lib/src/views/auth_page.dart`
-- `flutter_client/lib/src/views/app_shell.dart`
-- `flutter_client/lib/src/views/home_sections.dart`
 
 ## Resumen corto para otra IA
 
 Si otra IA retoma este repositorio, el contexto minimo util es:
 
-- el backend real vive en `backend` y expone `/api/...`
-- el cliente real vive en `flutter_client`
-- la URL por defecto del backend en el codigo actual es `http://localhost:3000`
-- Flutter usa `Provider + ChangeNotifier` y un `ServiceLocator`
-- la sesion se persiste localmente y se refresca con `refreshToken`
-- el streaming esta protegido con JWT
-- artistas y admins tienen modulos separados en el backend y en el cliente
+- backend real en `backend`
+- cliente real en `flutter_client`
+- despliegue privado funcional en VM Ubuntu
+- acceso web privado actual por `http://10.91.104.92`
+- backend servido por `systemd`
+- frontend web servido por `nginx`
+- PostgreSQL local al servidor
+- actualizaciones por `git pull` y `deploy/scripts/update_server.sh`
