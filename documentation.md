@@ -361,11 +361,12 @@ Archivos de apoyo agregados al repo:
 
 - `deploy/nginx/soundstream.test.conf`
 - `deploy/dnsmasq/soundstream.test.conf`
+- `deploy/scripts/update_server.sh`
 
 Flujo recomendado:
 
 1. Construir Flutter Web.
-2. Copiar el contenido de `flutter_client/build/web` a `/srv/soundstream/web`.
+2. Servir el build directamente desde el repo clonado en la VM.
 3. Instalar y configurar `nginx` con `deploy/nginx/soundstream.test.conf`.
 4. Resolver `soundstream.test` hacia la IP ZeroTier del servidor usando `dnsmasq` o DNS privado equivalente.
 5. Ajustar `WEB_ORIGIN` y `WEB_ORIGINS` del backend para `http://soundstream.test`.
@@ -376,7 +377,38 @@ Build recomendado para web privada:
 flutter build web
 ```
 
+El `root` recomendado para `nginx` es:
+
+- `/srv/soundstream/app/flutter_client/build/web`
+
 El cliente Flutter ya esta preparado para que, en Web, si no corre sobre `localhost`, use `/api` como base por defecto. Eso permite que el frontend servido desde `soundstream.test` consuma la API del mismo host sin depender de CORS ni de un `dart-define` adicional.
+
+### Despliegue automatico desde la VM
+
+Si el servidor ya tiene el repo clonado en `/srv/soundstream/app`, el despliegue recomendado es construir backend y frontend directamente en la VM.
+
+Script de apoyo:
+
+- `deploy/scripts/update_server.sh`
+
+Ejemplo de uso:
+
+```bash
+cd /srv/soundstream/app
+bash deploy/scripts/update_server.sh
+```
+
+El script:
+
+- actualiza el repo con `git pull`
+- instala dependencias del backend
+- aplica migraciones con `npm run prisma:deploy`
+- compila el backend y reinicia `soundstream-backend`
+- ejecuta `flutter pub get`
+- compila `flutter build web`
+- valida y recarga `nginx`
+
+Con este flujo ya no hace falta copiar manualmente `flutter_client/build/web` a otra carpeta del servidor en cada cambio.
 
 ## Flujo de actualizacion del servidor
 
