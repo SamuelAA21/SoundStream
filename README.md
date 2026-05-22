@@ -39,10 +39,23 @@ SoundStream/
 |- backend/
 |- deploy/
 |- flutter_client/
+|- Manual.md
 |- documentation.md
 |- README.md
 \- requerimientos.md
 ```
+
+## Frontend Flutter
+
+La arquitectura actual del cliente esta organizada en:
+
+- `src/core`: infraestructura tecnica
+- `src/theme`: colores, tema y decoraciones globales
+- `src/shared/widgets`: widgets reutilizables
+- `src/features/auth`
+- `src/features/layout`
+- `src/features/home`
+- `src/controllers`, `src/services`, `src/models`
 
 ## Inicio rapido local
 
@@ -133,6 +146,31 @@ Ese script:
 - compila `flutter build web`
 - recarga `nginx`
 
+## Inspeccion visual del frontend
+
+Para inspeccionar widgets Flutter en Web, no sirve editar el DOM como si fuera una app HTML tradicional. El flujo correcto es:
+
+```powershell
+cd flutter_client
+flutter run -d chrome
+```
+
+En otra terminal:
+
+```powershell
+dart devtools
+```
+
+Luego:
+
+- abrir la URL que imprime `dart devtools`
+- conectar la app usando la URL del Dart VM Service que imprime `flutter run`
+- usar `Inspector` y `Select Widget Mode`
+
+Nota:
+
+- `devtools_options.yaml` es configuracion local de DevTools y no debe versionarse en el repo
+
 ## Variables de entorno
 
 Ver:
@@ -152,6 +190,12 @@ Ver:
 - los testers necesitan acceso a la red ZeroTier
 - el seed deja el catalogo potencialmente vacio hasta subir audio real
 - no hay pipeline CI/CD formal todavia
+
+## Notas de depuracion recientes
+
+- si un cambio del cliente HTTP no se refleja en Flutter Web, haz reinicio completo de `flutter run`; no confies solo en hot reload para cambios de infraestructura del cliente
+- playlists y favoritos dependen del backend actual corriendo con la ultima version del repo
+- el historial se actualiza al registrar la reproduccion real, no solo al abrir el player
 
 ## Documentacion detallada
 

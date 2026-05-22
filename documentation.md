@@ -73,13 +73,17 @@ Modulos actuales:
 
 ### Frontend
 
-El cliente Flutter usa una estructura MVC ligera:
+El cliente Flutter usa una estructura modular ligera:
 
+- `core`: cliente HTTP, configuracion y persistencia local
+- `theme`: tema, colores y decoraciones globales
+- `shared/widgets`: widgets compartidos
+- `features/auth`
+- `features/layout`
+- `features/home`
 - `models`
 - `services`
 - `controllers`
-- `views`
-- `core`
 
 Detalles importantes:
 
@@ -87,6 +91,7 @@ Detalles importantes:
 - la sesion se persiste localmente
 - el cliente intenta refresh silencioso del token
 - en Web, fuera de `localhost`, el cliente usa `/api` como base por defecto para evitar CORS cuando esta detras de `nginx`
+- los requests `POST`, `PATCH` y `DELETE` sin body no deben forzar `Content-Type: application/json`
 
 ## Stack tecnologico
 
@@ -230,6 +235,7 @@ Todas las rutas del negocio cuelgan de `/api`.
 ### Artista
 
 - `GET /api/artist/songs`
+- `GET /api/artist/albums`
 - `POST /api/artist/songs`
 - `PATCH /api/artist/songs/:songId/publication`
 - `DELETE /api/artist/songs/:songId`
@@ -500,10 +506,34 @@ Frontend:
 
 - `flutter_client/lib/main.dart`
 - `flutter_client/lib/src/app.dart`
-- `flutter_client/lib/src/core/app_config.dart`
-- `flutter_client/lib/src/core/service_locator.dart`
+- `flutter_client/lib/src/core/config/app_config.dart`
+- `flutter_client/lib/src/core/config/service_locator.dart`
+- `flutter_client/lib/src/core/api/api_client.dart`
+- `flutter_client/lib/src/features/layout/views/app_shell.dart`
+- `flutter_client/lib/src/features/home/sections/catalog_section.dart`
 - `flutter_client/lib/src/controllers/controllers.dart`
 - `flutter_client/lib/src/services/services.dart`
+
+## Inspeccion y depuracion del frontend
+
+Para analizar componentes Flutter:
+
+1. corre la app con `flutter run -d chrome`
+2. abre otra terminal y ejecuta `dart devtools`
+3. abre la URL de DevTools
+4. conecta la app con la URL del Dart VM Service impresa por Flutter
+5. usa `Inspector` y `Select Widget Mode`
+
+Importante:
+
+- el navegador no expone widgets Flutter como un DOM HTML normal
+- para cambios visuales temporales, el flujo correcto es editar Dart y usar hot reload
+- si cambias infraestructura del cliente, por ejemplo `ApiClient`, a veces necesitas reiniciar completamente `flutter run`
+
+Archivo local:
+
+- `devtools_options.yaml` puede aparecer al usar DevTools
+- es un archivo local de configuracion y no debe subirse al repo
 
 ## Resumen corto para otra IA
 

@@ -92,6 +92,7 @@ Lo minimo util es entender:
 - `flutter build web`
 - `flutter build apk`
 - que el frontend web desplegado es el resultado compilado en `build/web`
+- como abrir `dart devtools` y usar `Flutter Inspector`
 
 ## 2. Mapa del repositorio
 
@@ -130,7 +131,10 @@ Piezas importantes:
 
 - `flutter_client/lib/main.dart`
 - `flutter_client/lib/src/app.dart`
-- `flutter_client/lib/src/core/app_config.dart`
+- `flutter_client/lib/src/core/config/app_config.dart`
+- `flutter_client/lib/src/core/config/service_locator.dart`
+- `flutter_client/lib/src/features/layout/views/app_shell.dart`
+- `flutter_client/lib/src/features/home/sections/`
 - `flutter_client/build/web/` cuando se genera el build web en el servidor
 
 ### `deploy/`
@@ -189,6 +193,32 @@ Idea clave:
 - `nginx`: proxy inverso y servidor del frontend web
 - `ZeroTier`: red privada de acceso para testers
 - `dnsmasq`: DNS privado opcional dentro de la red
+
+## 4.1. Como inspeccionar componentes Flutter
+
+Si quieres entender que widget pinta una parte de la UI, no uses DevTools del navegador como si fuera una app HTML tradicional. El flujo correcto es:
+
+1. correr `flutter run -d chrome`
+2. abrir otra terminal
+3. ejecutar `dart devtools`
+4. abrir la URL que muestra DevTools
+5. conectar la app con la URL del Dart VM Service que imprime Flutter
+6. entrar a `Inspector`
+7. usar `Select Widget Mode` y hacer clic sobre la UI
+
+Esto te deja ver:
+
+- arbol de widgets
+- constraints
+- tamanos
+- padding
+- propiedades del widget seleccionado
+
+Notas utiles:
+
+- para cambios visuales temporales, edita el codigo Dart y usa hot reload
+- si cambias el cliente HTTP o configuracion base, reinicia `flutter run` completo
+- `devtools_options.yaml` es local y no debe subirse al repo
 
 ## 5. Donde esta cada cosa en el servidor
 
@@ -329,6 +359,12 @@ Ese script:
 - ejecuta `flutter pub get`
 - compila `flutter build web`
 - valida y recarga `nginx`
+
+## 7.1. Cambios recientes que conviene recordar
+
+- el frontend artista ya no debe inferir sus albumes filtrando por nombre; ahora consume `GET /api/artist/albums`
+- el historial se refresca despues de registrar reproduccion real
+- playlists y favoritos pueden fallar si el frontend viejo sigue corriendo; tras cambios en `ApiClient`, haz reinicio completo de `flutter run`
 
 ## 8. Que pasa si la PC-servidor esta apagada
 
