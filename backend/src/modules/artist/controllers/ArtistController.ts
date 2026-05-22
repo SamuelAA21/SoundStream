@@ -31,6 +31,10 @@ export async function registerArtistRoutes(app: FastifyInstance) {
     return service.listMySongs((request.user as { sub: string }).sub);
   });
 
+  app.get("/albums", async (request) => {
+    return service.listMyAlbums((request.user as { sub: string }).sub);
+  });
+
   app.post("/songs", async (request, reply) => {
     const parts = request.parts();
     const fields: Record<string, string> = {};

@@ -43,11 +43,7 @@ class _ArtistSectionState extends State<ArtistSection> {
   @override
   Widget build(BuildContext context) {
     final artist = context.watch<ArtistController>();
-    final auth = context.watch<AuthController>();
-    final catalog = context.watch<CatalogController>();
-    final ownAlbums = catalog.albums
-        .where((a) => a.artist == auth.user?.artist?.name)
-        .toList();
+    final ownAlbums = artist.albums;
 
     return HomeSectionScroll(
       onRefresh: () async {

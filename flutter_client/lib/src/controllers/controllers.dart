@@ -22,8 +22,8 @@ class AuthController extends ChangeNotifier {
   AuthController({
     required AuthService authService,
     required SessionStorage storage,
-  })  : _authService = authService,
-        _storage = storage;
+  }) : _authService = authService,
+       _storage = storage;
 
   final AuthService _authService;
   final SessionStorage _storage;
@@ -70,10 +70,7 @@ class AuthController extends ChangeNotifier {
     }
   }
 
-  Future<void> login({
-    required String email,
-    required String password,
-  }) async {
+  Future<void> login({required String email, required String password}) async {
     await _runBusy(() async {
       _session = await _authService.login(email: email, password: password);
       await _storage.saveSession(_session!);
@@ -169,8 +166,8 @@ class CatalogController extends ChangeNotifier {
   CatalogController({
     required CatalogService catalogService,
     required HistoryService historyService,
-  })  : _catalogService = catalogService,
-        _historyService = historyService;
+  }) : _catalogService = catalogService,
+       _historyService = historyService;
 
   final CatalogService _catalogService;
   final HistoryService _historyService;
@@ -220,7 +217,7 @@ class CatalogController extends ChangeNotifier {
 
 class FavoritesController extends ChangeNotifier {
   FavoritesController({required FavoritesService favoritesService})
-      : _favoritesService = favoritesService;
+    : _favoritesService = favoritesService;
 
   final FavoritesService _favoritesService;
 
@@ -263,7 +260,7 @@ class FavoritesController extends ChangeNotifier {
 
 class PlaylistsController extends ChangeNotifier {
   PlaylistsController({required PlaylistsService playlistsService})
-      : _playlistsService = playlistsService;
+    : _playlistsService = playlistsService;
 
   final PlaylistsService _playlistsService;
 
@@ -350,7 +347,7 @@ class PlaylistsController extends ChangeNotifier {
 
 class HistoryController extends ChangeNotifier {
   HistoryController({required HistoryService historyService})
-      : _historyService = historyService;
+    : _historyService = historyService;
 
   final HistoryService _historyService;
 
@@ -374,8 +371,9 @@ class HistoryController extends ChangeNotifier {
 }
 
 class RecommendationsController extends ChangeNotifier {
-  RecommendationsController({required RecommendationsService recommendationsService})
-      : _recommendationsService = recommendationsService;
+  RecommendationsController({
+    required RecommendationsService recommendationsService,
+  }) : _recommendationsService = recommendationsService;
 
   final RecommendationsService _recommendationsService;
 
@@ -417,8 +415,10 @@ class PlayerController extends ChangeNotifier {
   PlayerController({
     required StreamingService streamingService,
     required HistoryService historyService,
-  })  : _streamingService = streamingService,
-        _historyService = historyService {
+    required HistoryController historyController,
+  }) : _streamingService = streamingService,
+       _historyService = historyService,
+       _historyController = historyController {
     _positionSub = _audioPlayer.onPositionChanged.listen((value) {
       position = value;
       notifyListeners();
@@ -438,6 +438,7 @@ class PlayerController extends ChangeNotifier {
 
   final StreamingService _streamingService;
   final HistoryService _historyService;
+  final HistoryController _historyController;
   final AudioPlayer _audioPlayer = AudioPlayer();
 
   late final StreamSubscription<Duration> _positionSub;
@@ -478,7 +479,9 @@ class PlayerController extends ChangeNotifier {
 
       await _historyService.registerInteraction(
         songId: song.id,
-        interactionType: source == 'recommendation' ? 'recommendation_click' : 'play',
+        interactionType: source == 'recommendation'
+            ? 'recommendation_click'
+            : 'play',
         metadata: {'source': source},
       );
     } catch (err) {
@@ -542,7 +545,9 @@ class PlayerController extends ChangeNotifier {
     final playedSeconds = markCompleted
         ? (duration.inSeconds > 0 ? duration.inSeconds : song.durationSeconds)
         : position.inSeconds;
-    final totalSeconds = duration.inSeconds > 0 ? duration.inSeconds : song.durationSeconds;
+    final totalSeconds = duration.inSeconds > 0
+        ? duration.inSeconds
+        : song.durationSeconds;
     final completionRate = totalSeconds == 0
         ? 0.0
         : (playedSeconds / totalSeconds * 100).clamp(0, 100).toDouble();
@@ -555,10 +560,9 @@ class PlayerController extends ChangeNotifier {
         songId: song.id,
         playedSeconds: playedSeconds,
         completionRate: completionRate,
-        deviceType: kIsWeb
-            ? 'web'
-            : (Platform.isAndroid ? 'android' : 'web'),
+        deviceType: kIsWeb ? 'web' : (Platform.isAndroid ? 'android' : 'web'),
       );
+      await _historyController.load();
     } catch (_) {}
 
     if (!markCompleted) {
@@ -584,13 +588,14 @@ class ArtistController extends ChangeNotifier {
   ArtistController({
     required ArtistService artistService,
     required FilePicker picker,
-  })  : _artistService = artistService,
-        _picker = picker;
+  }) : _artistService = artistService,
+       _picker = picker;
 
   final ArtistService _artistService;
   final FilePicker _picker;
 
   List<Song> songs = const [];
+  List<Album> albums = const [];
   bool loading = false;
   bool submitting = false;
   String? error;
@@ -601,7 +606,10 @@ class ArtistController extends ChangeNotifier {
     error = null;
     notifyListeners();
     try {
-      songs = await _artistService.listMySongs();
+      final loadedSongs = await _artistService.listMySongs();
+      final loadedAlbums = await _artistService.listMyAlbums();
+      songs = loadedSongs;
+      albums = loadedAlbums;
     } catch (err) {
       error = _friendlyError(err);
     } finally {
@@ -732,8 +740,8 @@ class AdminController extends ChangeNotifier {
   AdminController({
     required AdminService adminService,
     required FilePicker picker,
-  })  : _adminService = adminService,
-        _picker = picker;
+  }) : _adminService = adminService,
+       _picker = picker;
 
   final AdminService _adminService;
   final FilePicker _picker;

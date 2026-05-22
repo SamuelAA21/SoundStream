@@ -94,6 +94,7 @@ class ServiceLocator {
     playerController = PlayerController(
       streamingService: streamingService,
       historyService: historyService,
+      historyController: historyController,
     );
     artistController = ArtistController(
       artistService: artistService,

@@ -17,6 +17,18 @@ export class ArtistService {
     return songs.map((song) => this.toSongDto(song));
   }
 
+  async listMyAlbums(userId: string) {
+    const profile = await this.getProfile(userId);
+    const albums = await repository.listOwnAlbums(profile.id);
+    return albums.map((album) => ({
+      id: album.id.toString(),
+      title: album.title,
+      artist: album.artist.name,
+      genre: album.genre?.name ?? null,
+      songCount: album._count.songs
+    }));
+  }
+
   async uploadSong(input: { userId: string; fields: Record<string, string>; file: MultipartFile }) {
     const profile = await this.getProfile(input.userId);
     const title = this.required(input.fields.title, "title");
@@ -213,6 +225,7 @@ export class ArtistService {
       title: song.title,
       artist: song.artist.name,
       album: song.album?.title ?? null,
+      albumId: song.album?.id?.toString() ?? null,
       genre: song.genre.name,
       durationSeconds: song.durationSeconds,
       isPublished: Boolean(song.isActive && song.audioFile?.isAvailable),

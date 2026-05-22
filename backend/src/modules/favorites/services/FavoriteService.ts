@@ -14,6 +14,11 @@ const repository = new FavoriteRepository();
  */
 export class FavoriteService {
   async add(userId: string, songId: string) {
+    const song = await repository.findSong(BigInt(songId));
+    if (!song) {
+      throw new AppError(404, "song_not_found", "Song was not found");
+    }
+
     try {
       await repository.add(BigInt(userId), BigInt(songId));
 
@@ -44,13 +49,24 @@ export class FavoriteService {
 
   async list(userId: string) {
     const rows = await repository.list(BigInt(userId));
-    return rows.map(({ song, createdAt }) => ({
+    return rows.map(({ song, createdAt }) => this.toSongDto(song, createdAt));
+  }
+
+  private toSongDto(song: any, favoritedAt: Date) {
+    return {
       id: song.id.toString(),
       title: song.title,
+      durationSeconds: song.durationSeconds,
       artist: song.artist.name,
       album: song.album?.title ?? null,
+      albumId: song.album?.id?.toString() ?? null,
       genre: song.genre.name,
-      favoritedAt: createdAt,
-    }));
+      collaborators: song.collaborators?.map((item: any) => ({
+        id: item.artist.id.toString(),
+        name: item.artist.name,
+        role: item.role
+      })) ?? [],
+      favoritedAt
+    };
   }
 }

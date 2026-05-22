@@ -9,10 +9,7 @@ import '../core/api/api_exception.dart';
 import '../models/domain_models.dart';
 
 class AuthService {
-  AuthService({
-    required this.baseUrl,
-    required this.client,
-  });
+  AuthService({required this.baseUrl, required this.client});
 
   final String baseUrl;
   final http.Client client;
@@ -23,10 +20,7 @@ class AuthService {
   }) async {
     return _send(
       path: '/auth/login',
-      body: {
-        'email': email,
-        'password': password,
-      },
+      body: {'email': email, 'password': password},
     );
   }
 
@@ -44,18 +38,14 @@ class AuthService {
         'email': email,
         'password': password,
         'accountType': accountType,
-        if (artistName != null && artistName.isNotEmpty) 'artistName': artistName,
+        if (artistName != null && artistName.isNotEmpty)
+          'artistName': artistName,
       },
     );
   }
 
   Future<AuthSession> refresh(String refreshToken) {
-    return _send(
-      path: '/auth/refresh',
-      body: {
-        'refreshToken': refreshToken,
-      },
-    );
+    return _send(path: '/auth/refresh', body: {'refreshToken': refreshToken});
   }
 
   Future<void> logout(String refreshToken) async {
@@ -79,7 +69,9 @@ class AuthService {
       },
     );
     _ensureSuccess(response);
-    return UserProfile.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+    return UserProfile.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
   }
 
   Future<AuthSession> _send({
@@ -95,7 +87,9 @@ class AuthService {
       body: jsonEncode(body),
     );
     _ensureSuccess(response);
-    return AuthSession.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+    return AuthSession.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
   }
 
   Uri _uri(String path) {
@@ -137,19 +131,27 @@ class CatalogService {
     final suffix = query != null && query.trim().isNotEmpty
         ? '/catalog/songs?q=${Uri.encodeQueryComponent(query.trim())}'
         : '/catalog/songs';
-    final payload = await _apiClient.get(suffix, authenticated: false) as Map<String, dynamic>;
+    final payload =
+        await _apiClient.get(suffix, authenticated: false)
+            as Map<String, dynamic>;
     final data = payload['data'] as List<dynamic>? ?? const [];
     return data.whereType<Map<String, dynamic>>().map(Song.fromJson).toList();
   }
 
   Future<List<Album>> listAlbums() async {
-    final payload = await _apiClient.get('/catalog/albums', authenticated: false) as List<dynamic>;
-    return payload.whereType<Map<String, dynamic>>().map(Album.fromJson).toList();
+    final payload =
+        await _apiClient.get('/catalog/albums', authenticated: false)
+            as List<dynamic>;
+    return payload
+        .whereType<Map<String, dynamic>>()
+        .map(Album.fromJson)
+        .toList();
   }
 
   Future<Album> getAlbum(String albumId) async {
     final payload =
-        await _apiClient.get('/catalog/albums/$albumId', authenticated: false) as Map<String, dynamic>;
+        await _apiClient.get('/catalog/albums/$albumId', authenticated: false)
+            as Map<String, dynamic>;
     return Album.fromJson(payload);
   }
 }
@@ -161,7 +163,10 @@ class FavoritesService {
 
   Future<List<Song>> list() async {
     final payload = await _apiClient.get('/favorites') as List<dynamic>;
-    return payload.whereType<Map<String, dynamic>>().map(Song.fromJson).toList();
+    return payload
+        .whereType<Map<String, dynamic>>()
+        .map(Song.fromJson)
+        .toList();
   }
 
   Future<void> add(String songId) async {
@@ -191,31 +196,36 @@ class PlaylistsService {
     String? description,
     bool isPublic = false,
   }) async {
-    final payload = await _apiClient.post(
-      '/playlists',
-      body: {
-        'name': name,
-        'description': description,
-        'isPublic': isPublic,
-      },
-    ) as Map<String, dynamic>;
+    final payload =
+        await _apiClient.post(
+              '/playlists',
+              body: {
+                'name': name,
+                'description': description,
+                'isPublic': isPublic,
+              },
+            )
+            as Map<String, dynamic>;
     return PlaylistSummary.fromJson(payload);
   }
 
   Future<PlaylistDetail> detail(String playlistId) async {
-    final payload = await _apiClient.get('/playlists/$playlistId') as Map<String, dynamic>;
+    final payload =
+        await _apiClient.get('/playlists/$playlistId') as Map<String, dynamic>;
     return PlaylistDetail.fromJson(payload);
   }
 
   Future<PlaylistDetail> addSong(String playlistId, String songId) async {
     final payload =
-        await _apiClient.post('/playlists/$playlistId/songs/$songId') as Map<String, dynamic>;
+        await _apiClient.post('/playlists/$playlistId/songs/$songId')
+            as Map<String, dynamic>;
     return PlaylistDetail.fromJson(payload);
   }
 
   Future<PlaylistDetail> removeSong(String playlistId, String songId) async {
     final payload =
-        await _apiClient.delete('/playlists/$playlistId/songs/$songId') as Map<String, dynamic>;
+        await _apiClient.delete('/playlists/$playlistId/songs/$songId')
+            as Map<String, dynamic>;
     return PlaylistDetail.fromJson(payload);
   }
 }
@@ -227,7 +237,10 @@ class HistoryService {
 
   Future<List<HistoryEntry>> list() async {
     final payload = await _apiClient.get('/history') as List<dynamic>;
-    return payload.whereType<Map<String, dynamic>>().map(HistoryEntry.fromJson).toList();
+    return payload
+        .whereType<Map<String, dynamic>>()
+        .map(HistoryEntry.fromJson)
+        .toList();
   }
 
   Future<void> registerPlay({
@@ -302,9 +315,20 @@ class ArtistService {
 
   final ApiClient _apiClient;
 
+  Future<List<Album>> listMyAlbums() async {
+    final payload = await _apiClient.get('/artist/albums') as List<dynamic>;
+    return payload
+        .whereType<Map<String, dynamic>>()
+        .map(Album.fromJson)
+        .toList();
+  }
+
   Future<List<Song>> listMySongs() async {
     final payload = await _apiClient.get('/artist/songs') as List<dynamic>;
-    return payload.whereType<Map<String, dynamic>>().map(Song.fromJson).toList();
+    return payload
+        .whereType<Map<String, dynamic>>()
+        .map(Song.fromJson)
+        .toList();
   }
 
   Future<Song> uploadSong({
@@ -314,25 +338,29 @@ class ArtistService {
     required String durationSeconds,
     String? collaboratorNames,
   }) async {
-    final payload = await _apiClient.multipart(
-      '/artist/songs',
-      file: file,
-      fields: {
-        'title': title,
-        'genreName': genreName,
-        'durationSeconds': durationSeconds,
-        if (collaboratorNames != null && collaboratorNames.isNotEmpty)
-          'collaboratorNames': collaboratorNames,
-      },
-    ) as Map<String, dynamic>;
+    final payload =
+        await _apiClient.multipart(
+              '/artist/songs',
+              file: file,
+              fields: {
+                'title': title,
+                'genreName': genreName,
+                'durationSeconds': durationSeconds,
+                if (collaboratorNames != null && collaboratorNames.isNotEmpty)
+                  'collaboratorNames': collaboratorNames,
+              },
+            )
+            as Map<String, dynamic>;
     return Song.fromJson(payload);
   }
 
   Future<Song> setPublication(String songId, bool isPublished) async {
-    final payload = await _apiClient.patch(
-      '/artist/songs/$songId/publication',
-      body: {'isPublished': isPublished},
-    ) as Map<String, dynamic>;
+    final payload =
+        await _apiClient.patch(
+              '/artist/songs/$songId/publication',
+              body: {'isPublished': isPublished},
+            )
+            as Map<String, dynamic>;
     return Song.fromJson(payload);
   }
 
@@ -345,14 +373,17 @@ class ArtistService {
     String? genreName,
     required List<String> songIds,
   }) async {
-    final payload = await _apiClient.post(
-      '/artist/albums',
-      body: {
-        'title': title,
-        if (genreName != null && genreName.isNotEmpty) 'genreName': genreName,
-        'songIds': songIds,
-      },
-    ) as Map<String, dynamic>;
+    final payload =
+        await _apiClient.post(
+              '/artist/albums',
+              body: {
+                'title': title,
+                if (genreName != null && genreName.isNotEmpty)
+                  'genreName': genreName,
+                'songIds': songIds,
+              },
+            )
+            as Map<String, dynamic>;
     return Album.fromJson(payload);
   }
 
@@ -360,10 +391,12 @@ class ArtistService {
     required String songId,
     String? albumId,
   }) async {
-    final payload = await _apiClient.patch(
-      '/artist/songs/$songId/album',
-      body: {'albumId': albumId},
-    ) as Map<String, dynamic>;
+    final payload =
+        await _apiClient.patch(
+              '/artist/songs/$songId/album',
+              body: {'albumId': albumId},
+            )
+            as Map<String, dynamic>;
     return Song.fromJson(payload);
   }
 }
@@ -375,14 +408,19 @@ class AdminService {
 
   Future<List<AdminUser>> listUsers() async {
     final payload = await _apiClient.get('/admin/users') as List<dynamic>;
-    return payload.whereType<Map<String, dynamic>>().map(AdminUser.fromJson).toList();
+    return payload
+        .whereType<Map<String, dynamic>>()
+        .map(AdminUser.fromJson)
+        .toList();
   }
 
   Future<AdminUser> updateUserStatus(String userId, String status) async {
-    final payload = await _apiClient.patch(
-      '/admin/users/$userId/status',
-      body: {'status': status},
-    ) as Map<String, dynamic>;
+    final payload =
+        await _apiClient.patch(
+              '/admin/users/$userId/status',
+              body: {'status': status},
+            )
+            as Map<String, dynamic>;
     return AdminUser.fromJson(payload);
   }
 
@@ -393,16 +431,18 @@ class AdminService {
     required String genreName,
     required String durationSeconds,
   }) async {
-    final payload = await _apiClient.multipart(
-      '/admin/songs',
-      file: file,
-      fields: {
-        'title': title,
-        'artistName': artistName,
-        'genreName': genreName,
-        'durationSeconds': durationSeconds,
-      },
-    ) as Map<String, dynamic>;
+    final payload =
+        await _apiClient.multipart(
+              '/admin/songs',
+              file: file,
+              fields: {
+                'title': title,
+                'artistName': artistName,
+                'genreName': genreName,
+                'durationSeconds': durationSeconds,
+              },
+            )
+            as Map<String, dynamic>;
     return Song.fromJson(payload);
   }
 
@@ -412,15 +452,19 @@ class AdminService {
     String? genreName,
     required List<String> songIds,
   }) async {
-    final payload = await _apiClient.post(
-      '/admin/albums',
-      body: {
-        'title': title,
-        if (artistName != null && artistName.isNotEmpty) 'artistName': artistName,
-        if (genreName != null && genreName.isNotEmpty) 'genreName': genreName,
-        'songIds': songIds,
-      },
-    ) as Map<String, dynamic>;
+    final payload =
+        await _apiClient.post(
+              '/admin/albums',
+              body: {
+                'title': title,
+                if (artistName != null && artistName.isNotEmpty)
+                  'artistName': artistName,
+                if (genreName != null && genreName.isNotEmpty)
+                  'genreName': genreName,
+                'songIds': songIds,
+              },
+            )
+            as Map<String, dynamic>;
     return Album.fromJson(payload);
   }
 
@@ -428,15 +472,18 @@ class AdminService {
     required String songId,
     String? albumId,
   }) async {
-    final payload = await _apiClient.patch(
-      '/admin/songs/$songId/album',
-      body: {'albumId': albumId},
-    ) as Map<String, dynamic>;
+    final payload =
+        await _apiClient.patch(
+              '/admin/songs/$songId/album',
+              body: {'albumId': albumId},
+            )
+            as Map<String, dynamic>;
     return Song.fromJson(payload);
   }
 
   Future<Song> deleteSong(String songId) async {
-    final payload = await _apiClient.delete('/admin/songs/$songId') as Map<String, dynamic>;
+    final payload =
+        await _apiClient.delete('/admin/songs/$songId') as Map<String, dynamic>;
     return Song.fromJson(payload);
   }
 }

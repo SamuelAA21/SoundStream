@@ -84,6 +84,18 @@ export class ArtistRepository {
     });
   }
 
+  listOwnAlbums(artistId: bigint) {
+    return prisma.album.findMany({
+      where: { artistId },
+      include: {
+        artist: true,
+        genre: true,
+        _count: { select: { songs: true } }
+      },
+      orderBy: { title: "asc" }
+    });
+  }
+
   setOwnSongPublication(artistId: bigint, songId: bigint, isPublished: boolean) {
     return prisma.$transaction(async (tx) => {
       const song = await tx.song.findFirst({

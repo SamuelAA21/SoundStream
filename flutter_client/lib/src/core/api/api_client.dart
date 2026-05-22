@@ -168,7 +168,10 @@ class ApiClient {
     Map<String, dynamic>? body,
     required bool authenticated,
   }) {
-    final headers = _headers(authenticated: authenticated);
+    final headers = _headers(
+      authenticated: authenticated,
+      includeJsonContentType: body != null,
+    );
 
     switch (method) {
       case 'GET':
@@ -192,11 +195,15 @@ class ApiClient {
     }
   }
 
-  Map<String, String> _headers({required bool authenticated}) {
-    final headers = <String, String>{
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-    };
+  Map<String, String> _headers({
+    required bool authenticated,
+    bool includeJsonContentType = false,
+  }) {
+    final headers = <String, String>{'Accept': 'application/json'};
+
+    if (includeJsonContentType) {
+      headers['Content-Type'] = 'application/json';
+    }
 
     if (authenticated) {
       final token = accessTokenProvider();
