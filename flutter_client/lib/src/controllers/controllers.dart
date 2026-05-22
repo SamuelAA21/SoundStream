@@ -6,8 +6,8 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 
-import '../core/api_exception.dart';
-import '../core/session_storage.dart';
+import '../core/api/api_exception.dart';
+import '../core/storage/session_storage.dart';
 import '../models/domain_models.dart';
 import '../services/services.dart';
 

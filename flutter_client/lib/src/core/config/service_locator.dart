@@ -2,11 +2,11 @@ import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'api_client.dart';
+import '../api/api_client.dart';
 import 'app_config.dart';
-import 'session_storage.dart';
-import '../controllers/controllers.dart';
-import '../services/services.dart';
+import '../storage/session_storage.dart';
+import '../../controllers/controllers.dart';
+import '../../services/services.dart';
 
 /// Patrón Singleton + Factory — ServiceLocator
 ///
@@ -56,10 +56,7 @@ class ServiceLocator {
       client: http.Client(),
     );
 
-    authController = AuthController(
-      authService: authService,
-      storage: storage,
-    );
+    authController = AuthController(authService: authService, storage: storage);
 
     final apiClient = ApiClient(
       baseUrl: AppConfig.apiBaseUrl,
@@ -84,10 +81,12 @@ class ServiceLocator {
       catalogService: catalogService,
       historyService: historyService,
     );
-    favoritesController =
-        FavoritesController(favoritesService: favoritesService);
-    playlistsController =
-        PlaylistsController(playlistsService: playlistsService);
+    favoritesController = FavoritesController(
+      favoritesService: favoritesService,
+    );
+    playlistsController = PlaylistsController(
+      playlistsService: playlistsService,
+    );
     historyController = HistoryController(historyService: historyService);
     recommendationsController = RecommendationsController(
       recommendationsService: recommendationsService,

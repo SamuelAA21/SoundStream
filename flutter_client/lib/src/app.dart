@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'controllers/controllers.dart';
-import 'core/app_config.dart';
-import 'views/app_shell.dart';
-import 'views/auth_page.dart';
+import 'core/config/app_config.dart';
+import 'features/auth/views/auth_page.dart';
+import 'features/layout/views/app_shell.dart';
+import 'theme/app_theme.dart';
 
 class SoundStreamApp extends StatelessWidget {
   const SoundStreamApp({
@@ -35,10 +36,18 @@ class SoundStreamApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider<AuthController>.value(value: authController),
-        ChangeNotifierProvider<CatalogController>.value(value: catalogController),
-        ChangeNotifierProvider<FavoritesController>.value(value: favoritesController),
-        ChangeNotifierProvider<PlaylistsController>.value(value: playlistsController),
-        ChangeNotifierProvider<HistoryController>.value(value: historyController),
+        ChangeNotifierProvider<CatalogController>.value(
+          value: catalogController,
+        ),
+        ChangeNotifierProvider<FavoritesController>.value(
+          value: favoritesController,
+        ),
+        ChangeNotifierProvider<PlaylistsController>.value(
+          value: playlistsController,
+        ),
+        ChangeNotifierProvider<HistoryController>.value(
+          value: historyController,
+        ),
         ChangeNotifierProvider<RecommendationsController>.value(
           value: recommendationsController,
         ),
@@ -49,48 +58,7 @@ class SoundStreamApp extends StatelessWidget {
       child: MaterialApp(
         title: AppConfig.appName,
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF0B7285),
-            brightness: Brightness.light,
-          ),
-          scaffoldBackgroundColor: const Color(0xFFF4F7F8),
-          cardTheme: const CardThemeData(
-            margin: EdgeInsets.zero,
-            elevation: 0,
-            color: Colors.white,
-          ),
-          inputDecorationTheme: InputDecorationTheme(
-            filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(18),
-              borderSide: BorderSide.none,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(18),
-              borderSide: BorderSide(color: Colors.black12),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(18),
-              borderSide: const BorderSide(color: Color(0xFF0B7285), width: 1.4),
-            ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-          ),
-          filledButtonTheme: FilledButtonThemeData(
-            style: FilledButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-            ),
-          ),
-          outlinedButtonTheme: OutlinedButtonThemeData(
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-            ),
-          ),
-          useMaterial3: true,
-        ),
+        theme: AppTheme.dark,
         home: const _RootView(),
       ),
     );

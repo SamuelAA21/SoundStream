@@ -4,8 +4,8 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 
-import '../core/api_client.dart';
-import '../core/api_exception.dart';
+import '../core/api/api_client.dart';
+import '../core/api/api_exception.dart';
 import '../models/domain_models.dart';
 
 class AuthService {

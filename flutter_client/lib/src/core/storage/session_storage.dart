@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import '../models/domain_models.dart';
+import '../../models/domain_models.dart';
 
 class SessionStorage {
   SessionStorage(this._preferences);

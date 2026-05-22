@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import 'src/app.dart';
-import 'src/core/service_locator.dart';
+import 'src/core/config/service_locator.dart';
 
 /// Punto de entrada de la app.
 ///

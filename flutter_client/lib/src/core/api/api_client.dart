@@ -26,11 +26,7 @@ class ApiClient {
   final UnauthorizedHandler onUnauthorized;
 
   Future<dynamic> get(String path, {bool authenticated = true}) {
-    return _send(
-      method: 'GET',
-      path: path,
-      authenticated: authenticated,
-    );
+    return _send(method: 'GET', path: path, authenticated: authenticated);
   }
 
   Future<dynamic> post(
@@ -60,11 +56,7 @@ class ApiClient {
   }
 
   Future<dynamic> delete(String path, {bool authenticated = true}) {
-    return _send(
-      method: 'DELETE',
-      path: path,
-      authenticated: authenticated,
-    );
+    return _send(method: 'DELETE', path: path, authenticated: authenticated);
   }
 
   Future<http.Response> getRaw(String path, {bool authenticated = true}) async {
@@ -77,10 +69,7 @@ class ApiClient {
     if (response.statusCode == 401 && authenticated) {
       final refreshed = await refreshSession();
       if (refreshed) {
-        return client.get(
-          uri,
-          headers: _headers(authenticated: authenticated),
-        );
+        return client.get(uri, headers: _headers(authenticated: authenticated));
       }
       await onUnauthorized();
     }
