@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(nohup /data/data/com.termux/files/usr/bin/cloudflared --config /data/data/com.termux/files/home/.cloudflared/config.yml tunnel run demonup)",
+      "Bash(echo \"cloudflared PID: $!\")",
+      "Read(//tmp/**)"
+    ]
+  }
+}

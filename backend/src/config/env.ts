@@ -10,6 +10,7 @@ const envSchema = z.object({
   JWT_EXPIRES_IN: z.string().default("15m"),
   REFRESH_TOKEN_DAYS: z.coerce.number().int().positive().default(30),
   AUDIO_STORAGE_PATH: z.string().default("./storage/audio"),
+  STATIC_PATH: z.string().optional(),
   WEB_ORIGIN: z.string().default("http://localhost:5173"),
   WEB_ORIGINS: z.string().optional()
 });
