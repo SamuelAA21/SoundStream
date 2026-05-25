@@ -3,7 +3,7 @@
 set -Eeuo pipefail
 
 APP_DIR="${APP_DIR:-/srv/soundstream/app}"
-BRANCH="${1:-Implementacion-de-servidor}"
+BRANCH="${1:-rama_server}"
 BACKEND_DIR="$APP_DIR/backend"
 FRONTEND_DIR="$APP_DIR/flutter_client"
 
