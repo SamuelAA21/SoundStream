@@ -4,6 +4,7 @@ import '../../../controllers/controllers.dart';
 import '../../../theme/app_colors.dart';
 import 'login_panel.dart';
 import 'register_panel.dart';
+import 'totp_login_panel.dart';
 
 class AuthCard extends StatelessWidget {
   const AuthCard({
@@ -125,28 +126,30 @@ class AuthCard extends StatelessWidget {
             const SizedBox(height: 16),
           ],
 
-          // Tab content
+          // Tab content — swap for TOTP panel when challenge pending
           SizedBox(
             height: 420,
-            child: TabBarView(
-              controller: tabController,
-              children: [
-                LoginPanel(
-                  auth: auth,
-                  email: loginEmail,
-                  password: loginPassword,
-                ),
-                RegisterPanel(
-                  auth: auth,
-                  name: regName,
-                  email: regEmail,
-                  password: regPassword,
-                  artistName: regArtist,
-                  accountType: accountType,
-                  onAccountTypeChanged: onTypeChanged,
-                ),
-              ],
-            ),
+            child: auth.requiresTOTP
+                ? TotpLoginPanel(auth: auth)
+                : TabBarView(
+                    controller: tabController,
+                    children: [
+                      LoginPanel(
+                        auth: auth,
+                        email: loginEmail,
+                        password: loginPassword,
+                      ),
+                      RegisterPanel(
+                        auth: auth,
+                        name: regName,
+                        email: regEmail,
+                        password: regPassword,
+                        artistName: regArtist,
+                        accountType: accountType,
+                        onAccountTypeChanged: onTypeChanged,
+                      ),
+                    ],
+                  ),
           ),
         ],
       ),

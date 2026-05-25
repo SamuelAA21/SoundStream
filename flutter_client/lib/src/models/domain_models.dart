@@ -85,6 +85,32 @@ class AuthSession {
       };
 }
 
+class TotpChallenge {
+  TotpChallenge({required this.tempToken});
+  final String tempToken;
+}
+
+class LoginResult {
+  LoginResult.success(AuthSession s) : session = s, challenge = null;
+  LoginResult.totp(TotpChallenge c) : challenge = c, session = null;
+  final AuthSession? session;
+  final TotpChallenge? challenge;
+  bool get requiresTOTP => challenge != null;
+}
+
+class TotpSetupData {
+  TotpSetupData({required this.qrDataUrl, required this.otpauthUri, required this.secret});
+  final String qrDataUrl;
+  final String otpauthUri;
+  final String secret;
+
+  factory TotpSetupData.fromJson(Map<String, dynamic> json) => TotpSetupData(
+        qrDataUrl: json['qrDataUrl']?.toString() ?? '',
+        otpauthUri: json['otpauthUri']?.toString() ?? '',
+        secret: json['secret']?.toString() ?? '',
+      );
+}
+
 class Collaborator {
   Collaborator({
     required this.id,

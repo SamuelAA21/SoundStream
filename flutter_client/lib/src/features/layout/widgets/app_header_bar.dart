@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../controllers/controllers.dart';
+import '../../../features/auth/views/twofa_setup_page.dart';
 import '../../../theme/app_colors.dart';
 
 class AppHeaderBar extends StatelessWidget {
@@ -92,6 +93,22 @@ class AppHeaderBar extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(width: 8),
+                IconButton(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => ChangeNotifierProvider.value(
+                        value: context.read<AuthController>(),
+                        child: const TwofaSetupPage(),
+                      ),
+                    ),
+                  ),
+                  tooltip: 'Seguridad / 2FA',
+                  icon: const Icon(
+                    Icons.shield_outlined,
+                    color: AppColors.textMid,
+                    size: 20,
+                  ),
+                ),
                 IconButton(
                   onPressed: onLogout,
                   tooltip: 'Cerrar sesion',

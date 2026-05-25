@@ -12,7 +12,8 @@ const envSchema = z.object({
   AUDIO_STORAGE_PATH: z.string().default("./storage/audio"),
   STATIC_PATH: z.string().optional(),
   WEB_ORIGIN: z.string().default("http://localhost:5173"),
-  WEB_ORIGINS: z.string().optional()
+  WEB_ORIGINS: z.string().optional(),
+  TOTP_ISSUER: z.string().default("SoundStream")
 });
 
 export const env = envSchema.parse(process.env);

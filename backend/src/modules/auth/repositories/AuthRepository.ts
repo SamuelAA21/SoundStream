@@ -64,4 +64,25 @@ export class AuthRepository {
       data: { revokedAt: new Date() }
     });
   }
+
+  saveTotpSecret(userId: bigint, secret: string) {
+    return prisma.user.update({
+      where: { id: userId },
+      data: { totpSecret: secret, totpEnabled: false }
+    });
+  }
+
+  enableTotp(userId: bigint) {
+    return prisma.user.update({
+      where: { id: userId },
+      data: { totpEnabled: true }
+    });
+  }
+
+  disableTotp(userId: bigint) {
+    return prisma.user.update({
+      where: { id: userId },
+      data: { totpEnabled: false, totpSecret: null }
+    });
+  }
 }

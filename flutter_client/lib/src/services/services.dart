@@ -14,14 +14,78 @@ class AuthService {
   final String baseUrl;
   final http.Client client;
 
-  Future<AuthSession> login({
+  Future<LoginResult> login({
     required String email,
     required String password,
   }) async {
-    return _send(
-      path: '/auth/login',
-      body: {'email': email, 'password': password},
+    final response = await client.post(
+      _uri('/auth/login'),
+      headers: const {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'email': email, 'password': password}),
     );
+    _ensureSuccess(response);
+    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    if (json['requiresTOTP'] == true) {
+      return LoginResult.totp(
+        TotpChallenge(tempToken: json['tempToken']?.toString() ?? ''),
+      );
+    }
+    return LoginResult.success(AuthSession.fromJson(json));
+  }
+
+  Future<AuthSession> validateTotp({
+    required String tempToken,
+    required String code,
+  }) async {
+    return _send(
+      path: '/auth/2fa/validate',
+      body: {'tempToken': tempToken, 'code': code},
+    );
+  }
+
+  Future<TotpSetupData> setupTotp(String accessToken) async {
+    final response = await client.post(
+      _uri('/auth/2fa/setup'),
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $accessToken',
+      },
+      body: jsonEncode({}),
+    );
+    _ensureSuccess(response);
+    return TotpSetupData.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
+  }
+
+  Future<void> confirmTotp(String accessToken, String code) async {
+    final response = await client.post(
+      _uri('/auth/2fa/confirm'),
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $accessToken',
+      },
+      body: jsonEncode({'code': code}),
+    );
+    _ensureSuccess(response);
+  }
+
+  Future<void> disableTotp(String accessToken, String code) async {
+    final response = await client.delete(
+      _uri('/auth/2fa/disable'),
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $accessToken',
+      },
+      body: jsonEncode({'code': code}),
+    );
+    _ensureSuccess(response);
   }
 
   Future<AuthSession> register({

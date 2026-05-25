@@ -22,6 +22,15 @@ const refreshSchema = z.object({
   refreshToken: z.string().min(32)
 });
 
+const totpCodeSchema = z.object({
+  code: z.string().length(6).regex(/^\d{6}$/)
+});
+
+const totpValidateSchema = z.object({
+  tempToken: z.string().min(1),
+  code: z.string().length(6).regex(/^\d{6}$/)
+});
+
 export async function registerAuthRoutes(app: FastifyInstance) {
   app.get("/me", { preHandler: requireAuth }, async (request) => {
     return service.me((request.user as { sub: string }).sub);
@@ -45,5 +54,27 @@ export async function registerAuthRoutes(app: FastifyInstance) {
   app.post("/logout", async (request) => {
     const body = refreshSchema.parse(request.body);
     return service.logout(body.refreshToken);
+  });
+
+  app.post("/2fa/setup", { preHandler: requireAuth }, async (request) => {
+    const userId = (request.user as { sub: string }).sub;
+    return service.setupTotp(userId);
+  });
+
+  app.post("/2fa/confirm", { preHandler: requireAuth }, async (request) => {
+    const userId = (request.user as { sub: string }).sub;
+    const { code } = totpCodeSchema.parse(request.body);
+    return service.confirmTotp(userId, code);
+  });
+
+  app.delete("/2fa/disable", { preHandler: requireAuth }, async (request) => {
+    const userId = (request.user as { sub: string }).sub;
+    const { code } = totpCodeSchema.parse(request.body);
+    return service.disableTotp(userId, code);
+  });
+
+  app.post("/2fa/validate", async (request) => {
+    const body = totpValidateSchema.parse(request.body);
+    return service.validateTotp(app, body);
   });
 }

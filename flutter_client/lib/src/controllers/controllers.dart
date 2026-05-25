@@ -29,6 +29,7 @@ class AuthController extends ChangeNotifier {
   final SessionStorage _storage;
 
   AuthSession? _session;
+  TotpChallenge? _pendingTotp;
   bool _bootstrapping = true;
   bool _busy = false;
   String? _error;
@@ -42,6 +43,7 @@ class AuthController extends ChangeNotifier {
   bool get isBootstrapping => _bootstrapping;
   bool get isBusy => _busy;
   String? get error => _error;
+  bool get requiresTOTP => _pendingTotp != null;
 
   Future<void> bootstrap() async {
     try {
@@ -72,9 +74,43 @@ class AuthController extends ChangeNotifier {
 
   Future<void> login({required String email, required String password}) async {
     await _runBusy(() async {
-      _session = await _authService.login(email: email, password: password);
+      final result = await _authService.login(email: email, password: password);
+      if (result.requiresTOTP) {
+        _pendingTotp = result.challenge;
+      } else {
+        _session = result.session;
+        await _storage.saveSession(_session!);
+      }
+    });
+  }
+
+  Future<void> validateTotp(String code) async {
+    await _runBusy(() async {
+      _session = await _authService.validateTotp(
+        tempToken: _pendingTotp!.tempToken,
+        code: code,
+      );
+      _pendingTotp = null;
       await _storage.saveSession(_session!);
     });
+  }
+
+  void cancelTotp() {
+    _pendingTotp = null;
+    _error = null;
+    notifyListeners();
+  }
+
+  Future<TotpSetupData> setupTotp() async {
+    return _authService.setupTotp(_session!.accessToken);
+  }
+
+  Future<void> confirmTotp(String code) async {
+    await _authService.confirmTotp(_session!.accessToken, code);
+  }
+
+  Future<void> disableTotp(String code) async {
+    await _authService.disableTotp(_session!.accessToken, code);
   }
 
   Future<void> register({
