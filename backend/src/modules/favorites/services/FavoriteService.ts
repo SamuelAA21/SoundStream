@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { AppError } from "../../../utils/AppError.js";
 import { eventBus } from "../../../events/DomainEventBus.js";
 import { FavoriteRepository } from "../repositories/FavoriteRepository.js";
@@ -28,7 +28,7 @@ export class FavoriteService {
       return { ok: true };
     } catch (error) {
       if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error instanceof PrismaClientKnownRequestError &&
         error.code === "P2002"
       ) {
         throw new AppError(

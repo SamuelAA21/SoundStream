@@ -3,7 +3,7 @@ import { createWriteStream, existsSync, mkdirSync, unlinkSync } from "node:fs";
 import path from "node:path";
 import { pipeline } from "node:stream/promises";
 import type { MultipartFile } from "@fastify/multipart";
-import { Prisma } from "@prisma/client";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { env } from "../../../config/env.js";
 import { AppError } from "../../../utils/AppError.js";
 import { AdminSongRepository } from "../repositories/AdminSongRepository.js";
@@ -105,7 +105,7 @@ export class AdminSongService {
       if (error instanceof AppError) {
         throw error;
       }
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      if (error instanceof PrismaClientKnownRequestError && error.code === "P2002") {
         throw new AppError(409, "duplicate_audio_file", "This audio file is already registered");
       }
       throw error;

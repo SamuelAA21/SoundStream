@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { AppError } from "../../../utils/AppError.js";
 import { PlaylistRepository } from "../repositories/PlaylistRepository.js";
 
@@ -20,7 +20,7 @@ export class PlaylistService {
       });
       return this.toPlaylistDto(playlist);
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      if (error instanceof PrismaClientKnownRequestError && error.code === "P2002") {
         throw new AppError(409, "playlist_already_exists", "You already have a playlist with this name");
       }
       throw error;
@@ -78,7 +78,7 @@ export class PlaylistService {
       });
       return this.detail(userId, playlistId);
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      if (error instanceof PrismaClientKnownRequestError && error.code === "P2002") {
         throw new AppError(409, "song_already_in_playlist", "Song is already in this playlist");
       }
       throw error;
