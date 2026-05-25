@@ -1,14 +1,14 @@
 import bcrypt from "bcryptjs";
 import type { FastifyInstance } from "fastify";
 // @ts-ignore — otplib ESM types mismatch with NodeNext resolution
-import { authenticator } from "otplib";
+import otplib from "otplib";
 // @ts-ignore — @types/qrcode not available in prod deps
 import qrcode from "qrcode";
 import { env } from "../../../config/env.js";
 import { AppError } from "../../../utils/AppError.js";
 import { randomToken, sha256 } from "../../../utils/hash.js";
 import { AuthRepository } from "../repositories/AuthRepository.js";
-
+const { authenticator } = otplib;
 const repository = new AuthRepository();
 
 export class AuthService {
