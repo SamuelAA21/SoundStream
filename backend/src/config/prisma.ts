@@ -1,5 +1,16 @@
 import { PrismaClient } from "@prisma/client";
 
+/**
+ * Patrón Singleton para PrismaClient.
+ *
+ * Garantiza una única instancia de conexión a la base de datos durante
+ * todo el ciclo de vida de la aplicación, evitando agotamiento de
+ * conexiones en entornos serverless o con hot-reload (desarrollo).
+ *
+ * En producción el módulo ya actúa como singleton gracias al sistema
+ * de caché de módulos de Node.js; el globalThis lo extiende a entornos
+ * de desarrollo donde el módulo puede volver a evaluarse.
+ */
 class PrismaClientSingleton {
   private static instance: PrismaClient | null = null;
 
@@ -26,6 +37,7 @@ class PrismaClientSingleton {
   }
 }
 
+// Soporte para hot-reload en desarrollo (evita múltiples instancias)
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
 export const prisma =
