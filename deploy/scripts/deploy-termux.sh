@@ -17,7 +17,7 @@ git pull --ff-only origin "$BRANCH"
 
 log "Instalando dependencias del backend"
 cd "$BACKEND_DIR"
-npm ci --omit=dev
+npm ci
 
 log "Aplicando migraciones"
 npm run prisma:generate
