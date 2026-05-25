@@ -111,6 +111,32 @@ class TotpSetupData {
       );
 }
 
+class DeployJob {
+  DeployJob({
+    required this.jobId,
+    required this.branch,
+    required this.status,
+    required this.lines,
+  });
+  final String jobId;
+  final String branch;
+  final String status;
+  final List<String> lines;
+
+  bool get isRunning => status == 'running';
+  bool get isDone => status == 'done';
+  bool get isError => status == 'error';
+
+  factory DeployJob.fromJson(Map<String, dynamic> json) => DeployJob(
+        jobId: json['jobId']?.toString() ?? '',
+        branch: json['branch']?.toString() ?? '',
+        status: json['status']?.toString() ?? 'running',
+        lines: (json['lines'] as List<dynamic>? ?? [])
+            .map((e) => e.toString())
+            .toList(),
+      );
+}
+
 class Collaborator {
   Collaborator({
     required this.id,

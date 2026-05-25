@@ -19,6 +19,7 @@ class SoundStreamApp extends StatelessWidget {
     required this.playerController,
     required this.artistController,
     required this.adminController,
+    required this.deployController,
   });
 
   final AuthController authController;
@@ -30,6 +31,7 @@ class SoundStreamApp extends StatelessWidget {
   final PlayerController playerController;
   final ArtistController artistController;
   final AdminController adminController;
+  final DeployController deployController;
 
   @override
   Widget build(BuildContext context) {
@@ -54,6 +56,7 @@ class SoundStreamApp extends StatelessWidget {
         ChangeNotifierProvider<PlayerController>.value(value: playerController),
         ChangeNotifierProvider<ArtistController>.value(value: artistController),
         ChangeNotifierProvider<AdminController>.value(value: adminController),
+        ChangeNotifierProvider<DeployController>.value(value: deployController),
       ],
       child: MaterialApp(
         title: AppConfig.appName,

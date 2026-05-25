@@ -551,3 +551,22 @@ class AdminService {
     return Song.fromJson(payload);
   }
 }
+
+class DeployService {
+  DeployService(this._apiClient);
+  final ApiClient _apiClient;
+
+  Future<String> startDeploy(String branch) async {
+    final payload = await _apiClient.post(
+      '/admin/deploy',
+      body: {'branch': branch},
+    ) as Map<String, dynamic>;
+    return payload['jobId']?.toString() ?? '';
+  }
+
+  Future<DeployJob> pollJob(String jobId) async {
+    final payload = await _apiClient.get('/admin/deploy/$jobId')
+        as Map<String, dynamic>;
+    return DeployJob.fromJson(payload);
+  }
+}

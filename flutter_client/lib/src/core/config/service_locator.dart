@@ -39,6 +39,7 @@ class ServiceLocator {
   late final PlayerController playerController;
   late final ArtistController artistController;
   late final AdminController adminController;
+  late final DeployController deployController;
 
   // ─── Inicialización (Factory interno) ─────────────────────────────────────
 
@@ -75,6 +76,7 @@ class ServiceLocator {
     final streamingService = StreamingService(apiClient);
     final artistService = ArtistService(apiClient);
     final adminService = AdminService(apiClient);
+    final deployService = DeployService(apiClient);
 
     // ── Controladores ────────────────────────────────────────────────────────
     catalogController = CatalogController(
@@ -104,6 +106,7 @@ class ServiceLocator {
       adminService: adminService,
       picker: FilePicker.platform,
     );
+    deployController = DeployController(deployService: deployService);
 
     // ── Bootstrap de sesión ──────────────────────────────────────────────────
     await authController.bootstrap();

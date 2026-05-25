@@ -355,6 +355,8 @@ class _AdminSectionState extends State<AdminSection> {
               ],
             ),
           ),
+          const SizedBox(height: 18),
+          const _DeployPanel(),
           const SizedBox(height: 22),
           const HomeSectionTitle(
             title: 'Catalogo administrable',
@@ -477,4 +479,175 @@ class _FieldBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SizedBox(width: width, child: child);
+}
+
+class _DeployPanel extends StatefulWidget {
+  const _DeployPanel();
+
+  @override
+  State<_DeployPanel> createState() => _DeployPanelState();
+}
+
+class _DeployPanelState extends State<_DeployPanel> {
+  final _branchController = TextEditingController(text: 'rama_server');
+  final _scrollController = ScrollController();
+
+  static const _branches = ['rama_server', '2FA---Google', 'main'];
+
+  @override
+  void dispose() {
+    _branchController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final deploy = context.watch<DeployController>();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      }
+    });
+
+    return AppPanel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const HomeSectionTitle(
+            title: 'Despliegue del servidor',
+            subtitle: 'Elige una rama y despliega en el servidor de produccion.',
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              SizedBox(
+                width: 260,
+                child: AppDarkTextField(
+                  controller: _branchController,
+                  label: 'Rama',
+                  icon: Icons.code_rounded,
+                ),
+              ),
+              ..._branches.map(
+                (b) => ActionChip(
+                  label: Text(b, style: const TextStyle(fontSize: 12)),
+                  backgroundColor: AppColors.surface,
+                  side: BorderSide(color: AppColors.border),
+                  labelStyle: TextStyle(color: AppColors.textMid),
+                  onPressed: () => _branchController.text = b,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              AppGradientButton(
+                label: deploy.submitting ? 'Desplegando...' : 'Desplegar',
+                icon: Icons.rocket_launch_rounded,
+                isLoading: deploy.submitting,
+                onPressed: deploy.submitting
+                    ? null
+                    : () {
+                        final branch = _branchController.text.trim();
+                        if (branch.isEmpty) return;
+                        context.read<DeployController>().deploy(branch);
+                      },
+              ),
+              if (deploy.currentJob != null) ...[
+                const SizedBox(width: 12),
+                TextButton(
+                  onPressed: deploy.submitting
+                      ? null
+                      : context.read<DeployController>().reset,
+                  child: Text(
+                    'Limpiar',
+                    style: TextStyle(color: AppColors.textMid),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          if (deploy.error != null) ...[
+            const SizedBox(height: 10),
+            Text(
+              deploy.error!,
+              style: const TextStyle(color: Colors.redAccent, fontSize: 13),
+            ),
+          ],
+          if (deploy.currentJob != null) ...[
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                _StatusBadge(deploy.currentJob!.status),
+                const SizedBox(width: 10),
+                Text(
+                  'Rama: ${deploy.currentJob!.branch}',
+                  style: TextStyle(color: AppColors.textMid, fontSize: 13),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Container(
+              height: 220,
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.dark,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                child: Text(
+                  deploy.currentJob!.lines.join('\n'),
+                  style: const TextStyle(
+                    color: Color(0xFF9EE09E),
+                    fontSize: 12,
+                    fontFamily: 'monospace',
+                    height: 1.5,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _StatusBadge extends StatelessWidget {
+  const _StatusBadge(this.status);
+  final String status;
+
+  @override
+  Widget build(BuildContext context) {
+    final (color, icon, label) = switch (status) {
+      'running' => (AppColors.cyan, Icons.sync_rounded, 'Ejecutando'),
+      'done'    => (Colors.green, Icons.check_circle_rounded, 'Completado'),
+      _         => (Colors.redAccent, Icons.error_rounded, 'Error'),
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 14),
+          const SizedBox(width: 6),
+          Text(label, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600)),
+        ],
+      ),
+    );
+  }
 }

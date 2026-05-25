@@ -772,6 +772,67 @@ class ArtistController extends ChangeNotifier {
   }
 }
 
+class DeployController extends ChangeNotifier {
+  DeployController({required DeployService deployService})
+    : _deployService = deployService;
+
+  final DeployService _deployService;
+
+  DeployJob? currentJob;
+  bool submitting = false;
+  String? error;
+
+  Future<void> deploy(String branch) async {
+    submitting = true;
+    error = null;
+    currentJob = null;
+    notifyListeners();
+    try {
+      final jobId = await _deployService.startDeploy(branch);
+      currentJob = DeployJob(
+        jobId: jobId,
+        branch: branch,
+        status: 'running',
+        lines: [],
+      );
+      notifyListeners();
+      _poll();
+    } catch (e) {
+      error = _friendlyError(e);
+      submitting = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> _poll() async {
+    final id = currentJob?.jobId;
+    if (id == null) return;
+    try {
+      final job = await _deployService.pollJob(id);
+      currentJob = job;
+      notifyListeners();
+      if (job.isRunning) {
+        await Future.delayed(const Duration(seconds: 2));
+        _poll();
+      } else {
+        submitting = false;
+        notifyListeners();
+      }
+    } catch (e) {
+      error = _friendlyError(e);
+      submitting = false;
+      notifyListeners();
+    }
+  }
+
+  void reset() {
+    currentJob = null;
+    error = null;
+    submitting = false;
+    notifyListeners();
+  }
+}
+
 class AdminController extends ChangeNotifier {
   AdminController({
     required AdminService adminService,

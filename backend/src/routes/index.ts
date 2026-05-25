@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { registerAdminAlbumRoutes } from "../modules/admin/controllers/AdminAlbumController.js";
+import { registerAdminDeployRoutes } from "../modules/admin/controllers/AdminDeployController.js";
 import { registerAdminSongRoutes } from "../modules/admin/controllers/AdminSongController.js";
 import { registerAdminUserRoutes } from "../modules/admin/controllers/AdminUserController.js";
 import { registerAuthRoutes } from "../modules/auth/controllers/AuthController.js";
@@ -15,6 +16,7 @@ export async function registerRoutes(app: FastifyInstance) {
   app.register(registerAdminSongRoutes, { prefix: "/admin" });
   app.register(registerAdminAlbumRoutes, { prefix: "/admin" });
   app.register(registerAdminUserRoutes, { prefix: "/admin" });
+  app.register(registerAdminDeployRoutes, { prefix: "/admin" });
   app.register(registerAuthRoutes, { prefix: "/auth" });
   app.register(registerArtistRoutes, { prefix: "/artist" });
   app.register(registerCatalogRoutes, { prefix: "/catalog" });

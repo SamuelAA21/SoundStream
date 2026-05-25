@@ -26,6 +26,7 @@ Future<void> main() async {
       playerController: sl.playerController,
       artistController: sl.artistController,
       adminController: sl.adminController,
+      deployController: sl.deployController,
     ),
   );
 }
