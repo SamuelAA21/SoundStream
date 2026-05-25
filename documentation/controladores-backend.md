@@ -45,11 +45,11 @@ El controlador valida el cuerpo con Zod antes de delegar al servicio. Si el `acc
 
 ```json
 {
-  "name": "Santiago Arenas",
-  "email": "santiago@ejemplo.com",
+  "name": "Samuel Herrera",
+  "email": "samuel@ejemplo.com",
   "password": "MiClave123",
   "accountType": "artist",
-  "artistName": "SantArt"
+  "artistName": "SamuelArt"
 }
 ```
 
@@ -61,7 +61,7 @@ El controlador valida el cuerpo con Zod antes de delegar al servicio. Si el `acc
   "refreshToken": "a1b2c3d4e5f6...",
   "user": {
     "id": "5",
-    "name": "Santiago Arenas",
+    "name": "Samuel Herrera",
     "role": { "name": "artist" }
   }
 }
