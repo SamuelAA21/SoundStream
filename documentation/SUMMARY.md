@@ -1,12 +1,19 @@
 # Table of contents
 
-* [SoundStream](README.md)
-
-## Documentación
-
-* [Arquitectura](arquitectura.md)
-* [Api's](apis.md)
-* [Controladores Backend](controladores-backend.md)
-* [Repositorios](repositorios.md)
-* [Manual de Usuario](manual-de-usuario.md)
-* [Agradecimientos](agradecimientos.md)
+* [README](README.md)
+* [Manual Operativo de SoundStream](manual.md)
+* [SoundStream](documentation.md)
+* [requerimientos](requerimientos.md)
+* [SoundStream](documentation-1/README.md)
+  * [Table of contents](documentation-1/summary.md)
+  * [Agradecimientos](documentation-1/agradecimientos.md)
+  * [Api's](documentation-1/apis.md)
+  * [Arquitectura](documentation-1/arquitectura.md)
+  * [Controladores Backend](documentation-1/controladores-backend.md)
+  * [Manual de usuario](documentation-1/manual-de-usuario.md)
+  * [Repositorios](documentation-1/repositorios.md)
+* [flutter\_client](flutter_client/README.md)
+  * [ios](flutter_client/ios/README.md)
+    * [Runner](flutter_client/ios/runner/README.md)
+      * [Assets.xcassets](flutter_client/ios/runner/assets.xcassets/README.md)
+        * [Launch Screen Assets](flutter_client/ios/runner/assets.xcassets/launchimage.imageset.md)
