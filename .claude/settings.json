@@ -7,7 +7,8 @@
       "Bash(/usr/bin/node node_modules/typescript/bin/tsc)",
       "Bash(pkill -f \"dist/src/server.js\")",
       "Bash(echo \"Server PID: $!\")",
-      "Bash(echo \"PID: $!\")"
+      "Bash(echo \"PID: $!\")",
+      "Bash(psql -U u0_a231 -d soundstream -c \"\\\\d users\")"
     ],
     "additionalDirectories": [
       "/tmp"

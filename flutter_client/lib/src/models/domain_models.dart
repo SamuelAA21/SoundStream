@@ -90,12 +90,45 @@ class TotpChallenge {
   final String tempToken;
 }
 
+class TotpSetupChallenge {
+  TotpSetupChallenge({
+    required this.tempToken,
+    required this.qrDataUrl,
+    required this.otpauthUri,
+    required this.secret,
+  });
+  final String tempToken;
+  final String qrDataUrl;
+  final String otpauthUri;
+  final String secret;
+
+  factory TotpSetupChallenge.fromJson(Map<String, dynamic> json) =>
+      TotpSetupChallenge(
+        tempToken: json['tempToken']?.toString() ?? '',
+        qrDataUrl: json['qrDataUrl']?.toString() ?? '',
+        otpauthUri: json['otpauthUri']?.toString() ?? '',
+        secret: json['secret']?.toString() ?? '',
+      );
+}
+
 class LoginResult {
-  LoginResult.success(AuthSession s) : session = s, challenge = null;
-  LoginResult.totp(TotpChallenge c) : challenge = c, session = null;
+  LoginResult.success(AuthSession s)
+      : session = s,
+        challenge = null,
+        setupChallenge = null;
+  LoginResult.totp(TotpChallenge c)
+      : challenge = c,
+        session = null,
+        setupChallenge = null;
+  LoginResult.setup(TotpSetupChallenge s)
+      : setupChallenge = s,
+        session = null,
+        challenge = null;
   final AuthSession? session;
   final TotpChallenge? challenge;
+  final TotpSetupChallenge? setupChallenge;
   bool get requiresTOTP => challenge != null;
+  bool get requiresTOTPSetup => setupChallenge != null;
 }
 
 class TotpSetupData {

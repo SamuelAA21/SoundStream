@@ -38,7 +38,7 @@ export class AuthService {
       artistName
     });
 
-    return this.issueSession(app, user);
+    return this.issueTotpSetupChallenge(app, user);
   }
 
   async login(app: FastifyInstance, input: { email: string; password: string }) {
@@ -51,14 +51,55 @@ export class AuthService {
       throw new AppError(403, "user_not_active", "User is not active");
     }
 
-    if (user.totpEnabled) {
-      const tempToken = app.jwt.sign(
-        { sub: user.id.toString(), purpose: "totp" },
-        { expiresIn: "5m" }
-      );
-      return { requiresTOTP: true as const, tempToken };
+    if (!user.totpEnabled) {
+      return this.issueTotpSetupChallenge(app, user);
     }
 
+    const tempToken = app.jwt.sign(
+      { sub: user.id.toString(), purpose: "totp" },
+      { expiresIn: "5m" }
+    );
+    return { requiresTOTP: true as const, tempToken };
+  }
+
+  private async issueTotpSetupChallenge(
+    app: FastifyInstance,
+    user: { id: bigint; email: string; totpSecret?: string | null }
+  ) {
+    const secret = user.totpSecret ?? otpGenerateSecret();
+    if (!user.totpSecret) {
+      await repository.saveTotpSecret(user.id, secret);
+    }
+    const otpauthUri = otpGenerateURI({ label: user.email, issuer: env.TOTP_ISSUER, secret });
+    const qrDataUrl = await qrcode.toDataURL(otpauthUri);
+    const tempToken = app.jwt.sign(
+      { sub: user.id.toString(), purpose: "totp_setup" },
+      { expiresIn: "10m" }
+    );
+    return { requiresTOTPSetup: true as const, tempToken, qrDataUrl, otpauthUri, secret };
+  }
+
+  async confirmSetupTotp(app: FastifyInstance, input: { tempToken: string; code: string }) {
+    let payload: { sub: string; purpose: string };
+    try {
+      payload = app.jwt.verify<{ sub: string; purpose: string }>(input.tempToken);
+    } catch {
+      throw new AppError(401, "invalid_temp_token", "Token is invalid or expired");
+    }
+
+    if (payload.purpose !== "totp_setup") {
+      throw new AppError(401, "invalid_temp_token", "Token is invalid or expired");
+    }
+
+    const user = await repository.findUserById(BigInt(payload.sub));
+    if (!user || !user.totpSecret) {
+      throw new AppError(400, "totp_not_initiated", "2FA setup not started");
+    }
+
+    const valid = otpVerifySync({ token: input.code, secret: user.totpSecret });
+    if (!valid) throw new AppError(400, "invalid_totp_code", "Invalid authenticator code");
+
+    await repository.enableTotp(user.id);
     await repository.updateLastLogin(user.id);
     return this.issueSession(app, user);
   }

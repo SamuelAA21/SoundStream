@@ -77,4 +77,9 @@ export async function registerAuthRoutes(app: FastifyInstance) {
     const body = totpValidateSchema.parse(request.body);
     return service.validateTotp(app, body);
   });
+
+  app.post("/2fa/confirm-setup", async (request) => {
+    const body = totpValidateSchema.parse(request.body);
+    return service.confirmSetupTotp(app, body);
+  });
 }

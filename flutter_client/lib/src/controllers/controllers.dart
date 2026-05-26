@@ -30,6 +30,7 @@ class AuthController extends ChangeNotifier {
 
   AuthSession? _session;
   TotpChallenge? _pendingTotp;
+  TotpSetupChallenge? _pendingTotpSetup;
   bool _bootstrapping = true;
   bool _busy = false;
   String? _error;
@@ -44,6 +45,8 @@ class AuthController extends ChangeNotifier {
   bool get isBusy => _busy;
   String? get error => _error;
   bool get requiresTOTP => _pendingTotp != null;
+  bool get requiresTOTPSetup => _pendingTotpSetup != null;
+  TotpSetupChallenge? get pendingTotpSetup => _pendingTotpSetup;
 
   Future<void> bootstrap() async {
     try {
@@ -75,7 +78,9 @@ class AuthController extends ChangeNotifier {
   Future<void> login({required String email, required String password}) async {
     await _runBusy(() async {
       final result = await _authService.login(email: email, password: password);
-      if (result.requiresTOTP) {
+      if (result.requiresTOTPSetup) {
+        _pendingTotpSetup = result.setupChallenge;
+      } else if (result.requiresTOTP) {
         _pendingTotp = result.challenge;
       } else {
         _session = result.session;
@@ -97,8 +102,20 @@ class AuthController extends ChangeNotifier {
 
   void cancelTotp() {
     _pendingTotp = null;
+    _pendingTotpSetup = null;
     _error = null;
     notifyListeners();
+  }
+
+  Future<void> confirmSetupTotp(String code) async {
+    await _runBusy(() async {
+      _session = await _authService.confirmSetupTotp(
+        tempToken: _pendingTotpSetup!.tempToken,
+        code: code,
+      );
+      _pendingTotpSetup = null;
+      await _storage.saveSession(_session!);
+    });
   }
 
   Future<TotpSetupData> setupTotp() async {
@@ -121,14 +138,19 @@ class AuthController extends ChangeNotifier {
     String? artistName,
   }) async {
     await _runBusy(() async {
-      _session = await _authService.register(
+      final result = await _authService.register(
         name: name,
         email: email,
         password: password,
         accountType: accountType,
         artistName: artistName,
       );
-      await _storage.saveSession(_session!);
+      if (result.requiresTOTPSetup) {
+        _pendingTotpSetup = result.setupChallenge;
+      } else {
+        _session = result.session;
+        await _storage.saveSession(_session!);
+      }
     });
   }
 

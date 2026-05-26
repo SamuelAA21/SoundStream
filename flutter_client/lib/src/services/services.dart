@@ -28,6 +28,9 @@ class AuthService {
     );
     _ensureSuccess(response);
     final json = jsonDecode(response.body) as Map<String, dynamic>;
+    if (json['requiresTOTPSetup'] == true) {
+      return LoginResult.setup(TotpSetupChallenge.fromJson(json));
+    }
     if (json['requiresTOTP'] == true) {
       return LoginResult.totp(
         TotpChallenge(tempToken: json['tempToken']?.toString() ?? ''),
@@ -88,23 +91,42 @@ class AuthService {
     _ensureSuccess(response);
   }
 
-  Future<AuthSession> register({
+  Future<LoginResult> register({
     required String name,
     required String email,
     required String password,
     required String accountType,
     String? artistName,
   }) async {
-    return _send(
-      path: '/auth/register',
-      body: {
+    final response = await client.post(
+      _uri('/auth/register'),
+      headers: const {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
         'name': name,
         'email': email,
         'password': password,
         'accountType': accountType,
-        if (artistName != null && artistName.isNotEmpty)
-          'artistName': artistName,
-      },
+        if (artistName != null && artistName.isNotEmpty) 'artistName': artistName,
+      }),
+    );
+    _ensureSuccess(response);
+    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    if (json['requiresTOTPSetup'] == true) {
+      return LoginResult.setup(TotpSetupChallenge.fromJson(json));
+    }
+    return LoginResult.success(AuthSession.fromJson(json));
+  }
+
+  Future<AuthSession> confirmSetupTotp({
+    required String tempToken,
+    required String code,
+  }) async {
+    return _send(
+      path: '/auth/2fa/confirm-setup',
+      body: {'tempToken': tempToken, 'code': code},
     );
   }
 
