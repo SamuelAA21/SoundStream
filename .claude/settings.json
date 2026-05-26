@@ -3,7 +3,14 @@
     "allow": [
       "Bash(nohup /data/data/com.termux/files/usr/bin/cloudflared --config /data/data/com.termux/files/home/.cloudflared/config.yml tunnel run demonup)",
       "Bash(echo \"cloudflared PID: $!\")",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(/usr/bin/node node_modules/typescript/bin/tsc)",
+      "Bash(pkill -f \"dist/src/server.js\")",
+      "Bash(echo \"Server PID: $!\")",
+      "Bash(echo \"PID: $!\")"
+    ],
+    "additionalDirectories": [
+      "/tmp"
     ]
   }
 }

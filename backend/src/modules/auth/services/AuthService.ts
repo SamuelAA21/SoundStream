@@ -1,14 +1,13 @@
 import bcrypt from "bcryptjs";
 import type { FastifyInstance } from "fastify";
-// @ts-ignore — otplib ESM types mismatch with NodeNext resolution
-import otplib from "otplib";
 // @ts-ignore — @types/qrcode not available in prod deps
 import qrcode from "qrcode";
+// @ts-ignore — otplib v13 ESM named exports
+import { generateSecret as otpGenerateSecret, generateURI as otpGenerateURI, verifySync as otpVerifySync } from "otplib";
 import { env } from "../../../config/env.js";
 import { AppError } from "../../../utils/AppError.js";
 import { randomToken, sha256 } from "../../../utils/hash.js";
 import { AuthRepository } from "../repositories/AuthRepository.js";
-const { authenticator } = otplib;
 const repository = new AuthRepository();
 
 export class AuthService {
@@ -65,13 +64,13 @@ export class AuthService {
   }
 
   async setupTotp(userId: string) {
-    const secret = authenticator.generateSecret();
+    const secret = otpGenerateSecret();
     const user = await repository.findUserById(BigInt(userId));
     if (!user) throw new AppError(404, "user_not_found", "User not found");
 
     await repository.saveTotpSecret(BigInt(userId), secret);
 
-    const otpauthUri = authenticator.keyuri(user.email, env.TOTP_ISSUER, secret);
+    const otpauthUri = otpGenerateURI({ label: user.email, issuer: env.TOTP_ISSUER, secret });
     const qrDataUrl = await qrcode.toDataURL(otpauthUri);
 
     return { qrDataUrl, otpauthUri, secret };
@@ -83,7 +82,7 @@ export class AuthService {
       throw new AppError(400, "totp_not_initiated", "2FA setup not started");
     }
 
-    const valid = authenticator.verify({ token: code, secret: user.totpSecret });
+    const valid = otpVerifySync({ token: code, secret: user.totpSecret });
     if (!valid) throw new AppError(400, "invalid_totp_code", "Invalid authenticator code");
 
     await repository.enableTotp(BigInt(userId));
@@ -96,7 +95,7 @@ export class AuthService {
       throw new AppError(400, "totp_not_enabled", "2FA is not enabled");
     }
 
-    const valid = authenticator.verify({ token: code, secret: user.totpSecret });
+    const valid = otpVerifySync({ token: code, secret: user.totpSecret });
     if (!valid) throw new AppError(400, "invalid_totp_code", "Invalid authenticator code");
 
     await repository.disableTotp(BigInt(userId));
@@ -120,7 +119,7 @@ export class AuthService {
       throw new AppError(401, "totp_not_enabled", "2FA is not enabled for this user");
     }
 
-    const valid = authenticator.verify({ token: input.code, secret: user.totpSecret });
+    const valid = otpVerifySync({ token: input.code, secret: user.totpSecret });
     if (!valid) throw new AppError(400, "invalid_totp_code", "Invalid authenticator code");
 
     await repository.updateLastLogin(user.id);
